@@ -3,12 +3,14 @@ const express = require('express');
 const path = require('path');
 const logger = require('morgan');
 const helmet = require('helmet');
+const cors = require('cors')
 
 const indexRouter = require('./routes/index');
 const utxoRouter = require('./routes/utxo');
 
 const app = express();
 
+app.use(cors());
 app.use(helmet({
   contentSecurityPolicy: false
 }));
