@@ -1,0 +1,16 @@
+[Unit]
+Description=NodeJS Cli bridge
+After=network.target
+
+[Service]
+User=bitcoin-regtest
+WorkingDirectory=/home/bitcoin-regtest/nodejs-cli
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=500ms
+StartLimitInterval=0
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
+
