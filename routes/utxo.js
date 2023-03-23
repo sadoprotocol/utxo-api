@@ -4,7 +4,30 @@ const createError = require('http-errors');
 
 const utxo = require('../src/utxo');
 
-// params checker ==
+
+
+// txid base ==
+
+router.all(['/transaction'], function(req, res, next) {
+  if (req.body && req.body.txid) {
+    next();
+  } else {
+    next(createError(416, "Expecting txid key value"));
+  }
+});
+
+router.all('/transaction', function(req, res, next) {
+  utxo.transaction(req.body.txid).then(transaction => {
+    res.json({
+      success: true,
+      message: 'Transaction of ' + req.body.txid,
+      rdata: transaction
+    });
+  }).catch(next);
+});
+
+
+// address base ==
 
 router.all(['/balance', '/transactions', '/unspents'], function(req, res, next) {
   if (req.body && req.body.address) {
@@ -13,17 +36,6 @@ router.all(['/balance', '/transactions', '/unspents'], function(req, res, next) 
     next(createError(416, "Expecting address key value"));
   }
 });
-
-router.all(['/transaction',], function(req, res, next) {
-  if (req.body && req.body.txid) {
-    next();
-  } else {
-    next(createError(416, "Expecting txid key value"));
-  }
-});
-
-
-// address base ==
 
 router.all('/balance', function(req, res, next) {
   utxo.balance(req.body.address).then(balance => {
@@ -55,18 +67,6 @@ router.all('/unspents', function(req, res, next) {
   }).catch(next);
 });
 
-
-// txid base ==
-
-router.all('/transaction', function(req, res, next) {
-  utxo.transaction(req.body.txid).then(transaction => {
-    res.json({
-      success: true,
-      message: 'Transaction of ' + req.body.txid,
-      rdata: transaction
-    });
-  }).catch(next);
-});
 
 
 module.exports = router;
