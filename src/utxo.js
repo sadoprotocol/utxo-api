@@ -41,12 +41,18 @@ function rpc(arg = []) {
 }
 
 exports.balance = balance;
+exports.transaction = transaction;
 exports.transactions = transactions;
 exports.unspents = unspents;
 
 
 async function balance(address) {
   let res = await rpc([ 'balance', address ]);
+  return JSON.parse(res);
+}
+
+async function transaction(txid) {
+  let res = await rpc([ 'transaction', txid ]);
   return JSON.parse(res);
 }
 
