@@ -48,21 +48,41 @@ exports.unspents = unspents;
 
 async function balance(address) {
   let res = await rpc([ 'balance', address ]);
-  return JSON.parse(res);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
 }
 
 async function transaction(txid) {
   let res = await rpc([ 'transaction', txid ]);
-  return JSON.parse(res);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
 }
 
 async function transactions(address) {
   let res = await rpc([ 'transactions', address ]);
-  return JSON.parse(res);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
 }
 
 async function unspents(address) {
   let res = await rpc([ 'unspents', address ]);
-  return JSON.parse(res);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
 }
 
