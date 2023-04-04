@@ -6,6 +6,7 @@
     "start": "node ./bin/www"
   },
   "dependencies": {
+    "bitcoinjs-lib": "5.1.2",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "dotenv": "^16.0.3",
@@ -13,6 +14,7 @@
     "helmet": "^6.0.1",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
+    "moment": "^2.29.4",
     "morgan": "~1.9.1"
   }
 }

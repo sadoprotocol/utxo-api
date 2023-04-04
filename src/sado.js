@@ -1,0 +1,283 @@
+"use strict";
+
+const bitcoinjs = require('bitcoinjs-lib');
+const moment = require('moment');
+const utxo = require('../src/utxo');
+const infura = require('../src/infura');
+
+exports.get = get;
+
+
+async function getOwner(outpoint) {
+  if (outpoint && outpoint.indexOf(':') > 0) {
+    let locs = outpoint.split(':');
+    let txid = locs[0];
+    let vout = locs[1];
+
+    let res = await utxo.transaction(txid);
+
+    if (
+      typeof res === 'object' 
+      && typeof res.vout === 'object'
+      && typeof res.vout[vout] === 'object'
+      && typeof res.vout[vout].scriptPubKey === 'object'
+      && typeof res.vout[vout].scriptPubKey.address !== 'undefined'
+    ) {
+      return res.vout[vout].scriptPubKey.address;
+    }
+  }
+
+  return false;
+}
+
+async function get(address) {
+  const orderbook = {
+    cids: {
+      orders: [],
+      offers: []
+    },
+    orders: [],
+    offers: []
+  };
+
+  let order_count = 0;
+  let offer_count = 0;
+
+  async function filter(o, r, t) {
+    if (typeof r === 'object') {
+      if (r.type === 'buy') {
+        r.buy = true;
+        r.sell = false;
+      } else {
+        r.buy = false;
+        r.sell = true;
+      }
+
+      r.ago = moment(r.ts).fromNow();
+
+      if (t === 'order') {
+        r.cid = orderbook.cids.orders[o];
+        orderbook.orders.push(r);
+        order_count++;
+
+        if (
+          offer_count === orderbook.cids.offers.length
+          && order_count === orderbook.cids.orders.length
+        ) {
+          await finalFilter(orderbook);
+        }
+      } else if (t === 'offer') {
+        r.cid = orderbook.cids.offers[o];
+        orderbook.offers.push(r);
+        offer_count++;
+
+        if (
+          offer_count === orderbook.cids.offers.length
+          && order_count === orderbook.cids.orders.length
+        ) {
+          await finalFilter(orderbook);
+        }
+      } else {
+        if (t === 'order') {
+          order_count++;
+        } else if (t === 'offer') {
+          offer_count++;
+        } if (
+          offer_count === orderbook.cids.offers.length
+          && order_count === orderbook.cids.orders.length
+        ) {
+          await finalFilter(orderbook);
+        }
+      }
+    } else {
+      if (t === 'order') {
+        order_count++;
+      } else if (t === 'offer') {
+        offer_count++;
+      }
+
+      if (
+        offer_count === orderbook.cids.offers.length
+        && order_count === orderbook.cids.orders.length
+      ) {
+        await finalFilter(orderbook);
+      }
+    }
+  }
+
+  async function finalFilter(order_book) {
+    console.dir(order_book, {depth:null});
+    return false;
+    const filtered_orderbook = {
+      orders: [],
+      offers: []
+    };
+
+    async function loop() {
+      for (var i = 0; i < order_book.orders.length; i++) { 
+        await new Promise(next => {
+          ordit.apis.ord(['list', order_book.orders[i].location], function(ord) {
+            if (typeof ord === 'object' && ord.length > 0) {
+              var oid = "" + ord[0].start + "";
+              ordit.ordinals.search(oid, function(inscription)
+                {
+                  order_book.orders[i].inscription = inscription;
+                  filtered_orderbook.orders.push(order_book.orders[i]);
+                  next();
+                });
+            } else {
+              next();
+            }
+          });
+        });
+      }
+    };
+
+    // TODO
+    loop().then(() => {
+      async function second_loop() 
+      {
+        for (var i = 0; i < order_book.offers.length; i++) 
+        {   
+          await new Promise(next => 
+            {    
+              var this_offer = order_book.offers[i];
+
+              ordit.apis.ord(['list', this_offer.order.location], function(ord)
+                {
+                  if(typeof ord === 'object' && ord.length > 0)
+                  {
+                    var oid = "" + ord[0].start + "";
+
+                    ordit.ordinals.search(oid, function(inscription)
+                      {
+                        order_book.offers[i].inscription = inscription;
+                        filtered_orderbook.offers.push(order_book.offers[i]);
+                        next();
+                      });
+                  }
+                  else
+                  {
+                    next();
+                  }
+                });
+            });
+        }
+      };
+      second_loop().then(() => 
+        {
+          localStorage.setItem('ordit_orderbook_cache', JSON.stringify(filtered_orderbook));
+          callback(filtered_orderbook);
+        });
+    });
+  }
+
+  // ===
+
+  let txs = await utxo.transactions(address);
+
+  if (typeof txs === 'object' && txs.length > 0) {
+    for (let i = 0; i < txs.length; i++) {
+      for (let t = 0; t < txs[i].vout.length; t++) {
+        if (
+          typeof txs[i].vout[t].scriptPubKey === 'object'
+          && typeof txs[i].vout[t].scriptPubKey.utf8 !== 'undefined'
+          && txs[i].vout[t].scriptPubKey.utf8.includes("sado=")
+        ) {
+          let vs = s.split('=');
+          let ids = vs[1].split(':');
+          let type = ids[0];
+          let cid = ids[1];
+
+          if(type === 'order') {
+            orderbook.cids.orders.push(cid);
+          } else if(type === 'offer') {
+            orderbook.cids.offers.push(cid);
+          }
+        }
+      }
+    }
+
+    let order_cids = orderbook.cids.orders;
+    let offer_cids = orderbook.cids.offers;
+
+    if (order_cids.length > 0) {   
+      for (let od = 0; od < order_cids.length; od++) {
+        let response = await infura.get(order_cids[od]);
+
+        if (
+          typeof response === 'object'
+          && typeof response.ts !== 'undefined'
+          && typeof response.type !== 'undefined'
+          && typeof response.maker !== 'undefined'
+          && typeof response.location !== 'undefined'
+          && typeof response.signature !== 'undefined'
+        ) {
+          let owner = await getOwner(response.location);
+
+          if (response.type === 'sell' && owner === response.maker) {
+            await filter(od, response, 'order');
+          } else {
+            await filter(od, false, 'order');
+          }
+        } else {   
+          await filter(od, false, 'order');
+        }
+      }
+    }
+
+    if (offer_cids.length > 0) {
+      for (let off = 0; off < offer_cids.length; off++) {
+        let response = await infura.get(offer_cids[off]);
+
+        if (
+          typeof response === 'object'
+          && typeof response.ts !== 'undefined'
+          && typeof response.origin !== 'undefined'
+          && typeof response.taker !== 'undefined'
+          && typeof response.offer !== 'undefined'
+          && typeof response.signature !== 'undefined'
+        ) {
+          let any_signatures = false;
+          let temp_tx = bitcoinjs.Transaction.fromHex(response.offer);
+
+          for (let v = 0; v < temp_tx.ins.length; v++) {
+            if (temp_tx.ins[v].script.toString()) {
+              any_signatures = true;
+            }
+          }
+
+          if (any_signatures) {
+            let origin = await infura.get(response.origin);
+
+            if (
+              typeof origin === 'object'
+              && typeof origin.ts !== 'undefined'
+              && typeof origin.type !== 'undefined'
+              && typeof origin.maker !== 'undefined'
+              && typeof origin.location !== 'undefined'
+              && typeof origin.signature !== 'undefined'
+            ) {
+              response.order = origin;
+
+              let owner = await getOwner(origin.location);
+
+              if (owner === origin.maker || owner === response.taker) {
+                await filter(off, response, 'offer');
+              } else {
+                await filter(off, false, 'offer');
+              }
+            }
+          } else {
+            await filter(off, false, 'offer');
+          }
+        } else {
+          await filter(off, false, 'offer');
+        }
+      }
+    }
+  }
+
+  return orderbook;
+}
+
