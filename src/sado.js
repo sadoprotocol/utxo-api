@@ -40,6 +40,11 @@ async function get(address) {
     offers: []
   };
 
+  const filtered_orderbook = {
+    orders: [],
+    offers: []
+  };
+
   let order_count = 0;
   let offer_count = 0;
 
@@ -106,70 +111,39 @@ async function get(address) {
   }
 
   async function finalFilter(order_book) {
-    console.dir(order_book, {depth:null});
-    return false;
-    const filtered_orderbook = {
-      orders: [],
-      offers: []
-    };
+    for (var i = 0; i < order_book.orders.length; i++) {
+      let vArg = order_book.orders[i].location.split(':');
+      let txid = vArg[0];
+      let vout_n = vArg[1];
 
-    async function loop() {
-      for (var i = 0; i < order_book.orders.length; i++) { 
-        await new Promise(next => {
-          ordit.apis.ord(['list', order_book.orders[i].location], function(ord) {
-            if (typeof ord === 'object' && ord.length > 0) {
-              var oid = "" + ord[0].start + "";
-              ordit.ordinals.search(oid, function(inscription)
-                {
-                  order_book.orders[i].inscription = inscription;
-                  filtered_orderbook.orders.push(order_book.orders[i]);
-                  next();
-                });
-            } else {
-              next();
-            }
-          });
-        });
+      let tx = await utxo.transaction(txid);
+
+      let voutIndex = tx.vout.findIndex(item => {
+        return item.n === vout_n;
+      });
+
+      if (tx.vout[voutIndex].ordinals.length > 0 && tx.vout[voutIndex].ordinals[0].inscriptions.length > 0) {
+        order_book.orders[i].inscription = tx.vout[voutIndex].ordinals[0].inscriptions[0];
+        filtered_orderbook.orders.push(order_book.orders[i]);
       }
-    };
+    }
 
-    // TODO
-    loop().then(() => {
-      async function second_loop() 
-      {
-        for (var i = 0; i < order_book.offers.length; i++) 
-        {   
-          await new Promise(next => 
-            {    
-              var this_offer = order_book.offers[i];
+    for (var i = 0; i < order_book.offers.length; i++) {
+      let vArg = order_book.offers[i].location.split(':');
+      let txid = vArg[0];
+      let vout_n = vArg[1];
 
-              ordit.apis.ord(['list', this_offer.order.location], function(ord)
-                {
-                  if(typeof ord === 'object' && ord.length > 0)
-                  {
-                    var oid = "" + ord[0].start + "";
+      let tx = await utxo.transaction(txid);
 
-                    ordit.ordinals.search(oid, function(inscription)
-                      {
-                        order_book.offers[i].inscription = inscription;
-                        filtered_orderbook.offers.push(order_book.offers[i]);
-                        next();
-                      });
-                  }
-                  else
-                  {
-                    next();
-                  }
-                });
-            });
-        }
-      };
-      second_loop().then(() => 
-        {
-          localStorage.setItem('ordit_orderbook_cache', JSON.stringify(filtered_orderbook));
-          callback(filtered_orderbook);
-        });
-    });
+      let voutIndex = tx.vout.findIndex(item => {
+        return item.n === vout_n;
+      });
+
+      if (tx.vout[voutIndex].ordinals.length > 0 && tx.vout[voutIndex].ordinals[0].inscriptions.length > 0) {
+        order_book.offers[i].inscription = tx.vout[voutIndex].ordinals[0].inscriptions[0];
+        filtered_orderbook.offers.push(order_book.offers[i]);
+      }
+    }
   }
 
   // ===
@@ -184,7 +158,7 @@ async function get(address) {
           && typeof txs[i].vout[t].scriptPubKey.utf8 !== 'undefined'
           && txs[i].vout[t].scriptPubKey.utf8.includes("sado=")
         ) {
-          let vs = s.split('=');
+          let vs = txs[i].vout[t].scriptPubKey.utf8.split('=');
           let ids = vs[1].split(':');
           let type = ids[0];
           let cid = ids[1];
@@ -278,6 +252,6 @@ async function get(address) {
     }
   }
 
-  return orderbook;
+  return filtered_orderbook;
 }
 
