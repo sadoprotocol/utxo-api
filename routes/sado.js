@@ -22,7 +22,7 @@ router.all('/get', function(req, res, next) {
   sado.get(req.body.address).then(balance => {
     res.json({
       success: true,
-      message: 'SADO result of ' + req.body.address,
+      message: 'Orderbook of ' + req.body.address,
       rdata: balance
     });
   }).catch(next);
