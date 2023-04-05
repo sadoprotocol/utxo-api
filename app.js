@@ -6,7 +6,6 @@ const helmet = require('helmet');
 
 const indexRouter = require('./routes/index');
 const utxoRouter = require('./routes/utxo');
-const blockcypherRouter = require('./routes/blockcypher');
 const sadoRouter = require('./routes/sado');
 
 const app = express();
@@ -34,7 +33,6 @@ app.use(function(req, res, next) {
 
 app.use('/', indexRouter);
 app.use('/utxo', utxoRouter);
-app.use('/blockcypher', blockcypherRouter);
 app.use('/sado', sadoRouter);
 
 // catch 404 and forward to error handler

@@ -5,7 +5,18 @@ const router = express.Router();
 const createError = require('http-errors');
 
 const utxo = require('../src/utxo');
+const blockcypher = require('../src/blockcypher');
 
+const lookupMode = process.env.LOOKUPMODE;
+var lookup;
+
+if (lookupMode === 'utxo') {
+  lookup = utxo;
+} else if (lookupMode === 'blockcypher') {
+  lookup = blockcypher;
+} else {
+  throw new Error("Unknown lookup mode.");
+}
 
 
 // txid base ==
@@ -19,7 +30,7 @@ router.all(['/transaction'], function(req, res, next) {
 });
 
 router.all('/transaction', function(req, res, next) {
-  utxo.transaction(req.body.txid).then(transaction => {
+  lookup.transaction(req.body.txid).then(transaction => {
     res.json({
       success: true,
       message: 'Transaction of ' + req.body.txid,
@@ -40,7 +51,7 @@ router.all(['/balance', '/transactions', '/unspents'], function(req, res, next) 
 });
 
 router.all('/balance', function(req, res, next) {
-  utxo.balance(req.body.address).then(balance => {
+  lookup.balance(req.body.address).then(balance => {
     res.json({
       success: true,
       message: 'Balance of ' + req.body.address,
@@ -50,7 +61,7 @@ router.all('/balance', function(req, res, next) {
 });
 
 router.all('/transactions', function(req, res, next) {
-  utxo.transactions(req.body.address).then(transactions => {
+  lookup.transactions(req.body.address).then(transactions => {
     res.json({
       success: true,
       message: 'Transactions of ' + req.body.address,
@@ -60,7 +71,7 @@ router.all('/transactions', function(req, res, next) {
 });
 
 router.all('/unspents', function(req, res, next) {
-  utxo.unspents(req.body.address).then(unspents => {
+  lookup.unspents(req.body.address).then(unspents => {
     res.json({
       success: true,
       message: 'Unspents of ' + req.body.address,
