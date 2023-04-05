@@ -123,7 +123,13 @@ async function get(address) {
       });
 
       if (tx.vout[voutIndex].ordinals.length > 0 && tx.vout[voutIndex].ordinals[0].inscriptions.length > 0) {
-        order_book.orders[i].inscription = tx.vout[voutIndex].ordinals[0].inscriptions[0];
+        let inscription = tx.vout[voutIndex].ordinals[0].inscriptions[0];
+        order_book.orders[i].inscription = {
+          format: inscription.media_type,
+          data: inscription.media_content,
+          owner: inscription.owner,
+          location: inscription.satpoint
+        };
         filtered_orderbook.orders.push(order_book.orders[i]);
       }
     }
@@ -140,7 +146,13 @@ async function get(address) {
       });
 
       if (tx.vout[voutIndex].ordinals.length > 0 && tx.vout[voutIndex].ordinals[0].inscriptions.length > 0) {
-        order_book.offers[i].inscription = tx.vout[voutIndex].ordinals[0].inscriptions[0];
+        let inscription = tx.vout[voutIndex].ordinals[0].inscriptions[0];
+        order_book.offers[i].inscription = {
+          format: inscription.media_type,
+          data: inscription.media_content,
+          owner: inscription.owner,
+          location: inscription.satpoint
+        };
         filtered_orderbook.offers.push(order_book.offers[i]);
       }
     }
