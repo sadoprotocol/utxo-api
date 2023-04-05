@@ -129,7 +129,7 @@ async function get(address) {
     }
 
     for (var i = 0; i < order_book.offers.length; i++) {
-      let vArg = order_book.offers[i].location.split(':');
+      let vArg = order_book.offers[i].order.location.split(':');
       let txid = vArg[0];
       let vout_n = parseInt(vArg[1]);
 
