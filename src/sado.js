@@ -114,7 +114,7 @@ async function get(address) {
     for (var i = 0; i < order_book.orders.length; i++) {
       let vArg = order_book.orders[i].location.split(':');
       let txid = vArg[0];
-      let vout_n = vArg[1];
+      let vout_n = parseInt(vArg[1]);
 
       let tx = await utxo.transaction(txid);
 
@@ -131,7 +131,7 @@ async function get(address) {
     for (var i = 0; i < order_book.offers.length; i++) {
       let vArg = order_book.offers[i].location.split(':');
       let txid = vArg[0];
-      let vout_n = vArg[1];
+      let vout_n = parseInt(vArg[1]);
 
       let tx = await utxo.transaction(txid);
 
