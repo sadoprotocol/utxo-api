@@ -1,6 +1,6 @@
 "use strict";
 
-const network = process.env.NETWORK;
+const network = process.env.BLOCKCYPHERNETWORK;
 const rootUrl = process.env.BLOCKCYPHERURL;
 const coin = process.env.BLOCKCYPHERCOIN;
 const token = process.env.BLOCKCYPHERTOKEN;

@@ -1,12 +1,12 @@
 # GENERAL
 PORT=3030
 DIRECTORYPATH=/home/bitcoin-regtest/nodejs-utxo
-NETWORK="testnet"
 
 # INFURA
 INFURAGATEWAY="https://sado.infura-ipfs.io"
 
 # BLOCKCYPHER
 BLOCKCYPHERURL="https://api.blockcypher.com/v1"
+BLOCKCYPHERNETWORK="testnet"
 BLOCKCYPHERCOIN="Bitcoin"
 BLOCKCYPHERTOKEN=""
