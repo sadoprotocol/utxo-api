@@ -100,7 +100,51 @@ async function transactions(address) {
   return result;
 }
 
-async function unspents(address) {}
+async function unspents(address) {
+  let bUnspents = await get('addrs/' + address + '?unspentOnly=true&includeScript=true');
+
+  let result = [];
+
+  if (typeof bUnspents === 'object' && bUnspents.txrefs) {
+    for (let i = 0; i < bUnspents.txrefs.length; i++) {
+      let u = bUnspents.txrefs[i];
+
+      let data = {
+        n: parseInt(u.tx_output_n),
+        txHash: "",
+        blockHash: "",
+        blockN: parseInt(u.block_height),
+        sats: u.value,
+        scriptPubKey: {},
+        txid: "",
+        value: 0,
+        ordinals: []
+      }
+
+      let tx = await utxo.transaction(u.tx_hash);
+
+      if (tx) {
+        data.txid = tx.txid;
+        data.txHash = tx.hash;
+        data.blockHash = tx.blockhash;
+
+        let voutIndex = tx.vout.findIndex(item => {
+          return item.n === data.n;
+        });
+
+        if (voutIndex !== -1) {
+          data.scriptPubKey = tx.vout[voutIndex].scriptPubKey;
+          data.ordinals = tx.vout[voutIndex].ordinals;
+          data.value = tx.vout[voutIndex].value;
+
+          result.push(data);
+        }
+      }
+    }
+  }
+
+  return result;
+}
 
 
 function intToStr(num, decimal) {
