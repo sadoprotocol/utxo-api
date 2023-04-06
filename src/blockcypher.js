@@ -1,5 +1,7 @@
 "use strict";
 
+const utxo = require('../src/utxo');
+
 const network = process.env.BLOCKCYPHERNETWORK;
 const rootUrl = process.env.BLOCKCYPHERURL;
 const coin = process.env.BLOCKCYPHERCOIN;
@@ -44,21 +46,27 @@ exports.transactions = transactions;
 exports.unspents = unspents;
 
 
-function get(path) {
+function get(path, data = false) {
   if (path.indexOf('/') !== 0) {
     path = '/' + path;
   }
 
   let url = endpoint + path + '?token=' + token;
 
+  let requestObject = {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    }
+  };
+
+  if (data) {
+    requestObject.body = JSON.stringify(data);
+  }
+
   return new Promise(resolve => {
-    fetch (url, {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      }
-    })
+    fetch (url, requestObject)
       .then(response => response.json())
       .then(response => resolve(response));
   });
@@ -73,11 +81,24 @@ async function balance(address) {
   };
 }
 
-async function transaction() {}
+async function transaction(txid) {}
 
-async function transactions() {}
+async function transactions(address) {
+  let txs = await get('addrs/' + address + '/full');
 
-async function unspents() {}
+  let result = [];
+
+  if (typeof txs === 'object' && txs.txs) {
+    for (let i = 0; i < txs.txs.length; i++) {
+      let tx = await utxo.transaction(txs.txs[i].hash);
+      result.push(tx);
+    }
+  }
+
+  return result;
+}
+
+async function unspents(address) {}
 
 
 function intToStr(num, decimal) {
