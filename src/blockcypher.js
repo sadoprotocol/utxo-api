@@ -81,7 +81,9 @@ async function balance(address) {
   };
 }
 
-async function transaction(txid) {}
+async function transaction(txid) {
+  return await utxo.transaction(txid);
+}
 
 async function transactions(address) {
   let txs = await get('addrs/' + address + '/full');
