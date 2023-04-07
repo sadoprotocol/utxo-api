@@ -44,6 +44,7 @@ exports.balance = balance;
 exports.transaction = transaction;
 exports.transactions = transactions;
 exports.unspents = unspents;
+exports.relay = relay;
 
 
 async function balance(address) {
@@ -84,5 +85,9 @@ async function unspents(address) {
   } catch (err) {
     throw new Error(res);
   }
+}
+
+async function relay(hex) {
+  return await rpc([ 'relay', hex ]);
 }
 

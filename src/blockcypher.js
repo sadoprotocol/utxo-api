@@ -5,7 +5,7 @@ const utxo = require('../src/utxo');
 const network = process.env.BLOCKCYPHERNETWORK;
 const rootUrl = process.env.BLOCKCYPHERURL;
 const coin = process.env.BLOCKCYPHERCOIN;
-const token = process.env.BLOCKCYPHERTOKEN;
+const token = process.env.BLOCKCYPHERTOKEN || false;
 
 const resources = [
   {
@@ -44,6 +44,7 @@ exports.balance = balance;
 exports.transaction = transaction;
 exports.transactions = transactions;
 exports.unspents = unspents;
+exports.relay = relay;
 
 
 function get(path, data = false) {
@@ -51,7 +52,11 @@ function get(path, data = false) {
     path = '/' + path;
   }
 
-  let url = endpoint + path + '?token=' + token;
+  let url = endpoint + path;
+
+  if (token) {
+    url += '?token=' + token;
+  }
 
   let requestObject = {
     method: 'GET',
@@ -145,6 +150,17 @@ async function unspents(address) {
 
   return result;
 }
+
+async function relay(hex) {
+  let relayed = await get('addrs/' + address + '/balance', {
+    tx: hex
+  });
+
+  return relayed.hash || relayed.tx.hash;
+}
+
+
+// ==
 
 
 function intToStr(num, decimal) {

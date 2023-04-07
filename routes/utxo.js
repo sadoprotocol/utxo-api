@@ -7,7 +7,9 @@ const createError = require('http-errors');
 const utxo = require('../src/utxo');
 const blockcypher = require('../src/blockcypher');
 
+const blockcypherNetwork = process.env.BLOCKCYPHERNETWORK;
 const lookupMode = process.env.LOOKUPMODE;
+
 var lookup;
 
 if (lookupMode === 'utxo') {
@@ -17,6 +19,33 @@ if (lookupMode === 'utxo') {
 } else {
   throw new Error("Unknown lookup mode.");
 }
+
+
+// hex base ==
+
+router.all(['/relay'], function(req, res, next) {
+  if (req.body && req.body.hex) {
+    next();
+  } else {
+    next(createError(416, "Expecting hex key value"));
+  }
+});
+
+router.all('/relay', function(req, res, next) {
+  if (blockcypherNetwork === 'mainnet' || blockcypherNetwork === 'testnet') {
+    lookup = blockcypher;
+  } else {
+    lookup = utxo;
+  }
+
+  lookup.relay(req.body.hex).then(txid => {
+    res.json({
+      success: true,
+      message: 'Relayed',
+      rdata: txid
+    });
+  }).catch(next);
+});
 
 
 // txid base ==
