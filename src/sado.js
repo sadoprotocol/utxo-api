@@ -130,6 +130,7 @@ async function get(address) {
           owner: inscription.owner,
           location: inscription.satpoint
         };
+        order_book.orders[i].ordinals = tx.vout[voutIndex].ordinals;
         filtered_orderbook.orders.push(order_book.orders[i]);
       }
     }
@@ -153,6 +154,7 @@ async function get(address) {
           owner: inscription.owner,
           location: inscription.satpoint
         };
+        order_book.offers[i].ordinals = tx.vout[voutIndex].ordinals;
         filtered_orderbook.offers.push(order_book.offers[i]);
       }
     }
