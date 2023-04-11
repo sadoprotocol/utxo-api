@@ -9,6 +9,7 @@ const blockcypher = require('../src/blockcypher');
 
 const blockcypherNetwork = process.env.BLOCKCYPHERNETWORK;
 const lookupMode = process.env.LOOKUPMODE;
+const relayMode = process.env.RELAYMODE;
 
 var lookup;
 
@@ -32,7 +33,7 @@ router.all(['/relay'], function(req, res, next) {
 });
 
 router.all('/relay', function(req, res, next) {
-  if (blockcypherNetwork === 'mainnet' || blockcypherNetwork === 'testnet') {
+  if (relayMode === 'blockcypher') {
     lookup = blockcypher;
   } else {
     lookup = utxo;

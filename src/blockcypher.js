@@ -152,7 +152,7 @@ async function unspents(address) {
 }
 
 async function relay(hex) {
-  let relayed = await get('addrs/' + address + '/balance', {
+  let relayed = await get('txs/push', {
     tx: hex
   });
 

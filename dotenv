@@ -2,6 +2,7 @@
 PORT=3030
 DIRECTORYPATH=/home/bitcoin-regtest/nodejs-utxo
 LOOKUPMODE="blockcypher"
+RELAYMODE="utxo"
 
 # INFURA
 INFURAGATEWAY="https://sado.infura-ipfs.io"
