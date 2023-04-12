@@ -93,6 +93,12 @@ async function relay(hex) {
 }
 
 async function inscriptions(outpoint) {
-  return await rpc([ 'inscriptions', outpoint ]);
+  let res = await rpc([ 'inscriptions', outpoint ]);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
 }
 
