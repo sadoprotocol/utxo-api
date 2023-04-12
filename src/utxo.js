@@ -45,6 +45,7 @@ exports.transaction = transaction;
 exports.transactions = transactions;
 exports.unspents = unspents;
 exports.relay = relay;
+exports.inscriptions = inscriptions;
 
 
 async function balance(address) {
@@ -89,5 +90,9 @@ async function unspents(address) {
 
 async function relay(hex) {
   return await rpc([ 'relay', hex ]);
+}
+
+async function inscriptions(outpoint) {
+  return await rpc([ 'inscriptions', outpoint ]);
 }
 

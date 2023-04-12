@@ -7,7 +7,6 @@ const createError = require('http-errors');
 const utxo = require('../src/utxo');
 const blockcypher = require('../src/blockcypher');
 
-const blockcypherNetwork = process.env.BLOCKCYPHERNETWORK;
 const lookupMode = process.env.LOOKUPMODE;
 const relayMode = process.env.RELAYMODE;
 
@@ -20,6 +19,19 @@ if (lookupMode === 'utxo') {
 } else {
   throw new Error("Unknown lookup mode.");
 }
+
+
+// no params
+
+router.all('/inscriptions/:outpoint', function(req, res, next) {
+  utxo.inscriptions(req.params.outpoint).then(data => {
+    res.json({
+      success: true,
+      message: 'Inscriptions for outpoint ' + req.params.outpoint,
+      rdata: data
+    });
+  }).catch(next);
+});
 
 
 // hex base ==
