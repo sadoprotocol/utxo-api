@@ -23,6 +23,26 @@ if (lookupMode === 'utxo') {
 
 // no params
 
+router.all('/inscriptions/:outpoint/:id/media', function(req, res, next) {
+  utxo.inscriptions(req.params.outpoint).then(data => {
+    let dataIndex = data.findIndex(item => {
+      return item.id === req.params.id;
+    });
+
+    if (dataIndex === -1) {
+      next(createError("Inscription id not found.."));
+    } else {
+      let buff = Buffer.from(data[dataIndex].media_content, 'base64');
+
+      res.writeHead(200, {
+        'Content-Type': data[dataIndex].media_type,
+        'Content-Length': buff.length
+      });
+      res.end(buff);
+    }
+  }).catch(next);
+});
+
 router.all('/inscriptions/:outpoint', function(req, res, next) {
   utxo.inscriptions(req.params.outpoint).then(data => {
     res.json({
