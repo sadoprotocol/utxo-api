@@ -64,7 +64,7 @@ function deletePattern(params) {
         pattern: pattern
       }, function handleError (err) {
         if (err) {
-          reject(err);
+          resolve(false);
         } else {
           resolve(true);
         }
