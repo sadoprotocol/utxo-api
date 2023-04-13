@@ -186,8 +186,6 @@ async function get(address) {
       return gotCache;
     }
 
-    await redis.delete({ pattern: `/sado/get/${address}/orders-offers/*` });
-
     if (order_cids.length > 0) {   
       for (let od = 0; od < order_cids.length; od++) {
         let response = await infura.get(order_cids[od]);
