@@ -264,7 +264,6 @@ async function get(address) {
 
     redis.set({
       key: redisKey,
-      expiration: 3600 * 24 * 30,
       data: filtered_orderbook
     });
   }

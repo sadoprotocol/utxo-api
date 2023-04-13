@@ -6,15 +6,13 @@ const redisDeletePattern = require('redis-delete-pattern');
 const redisClient = Redis.createClient();
 redisClient.connect().then(() => console.log('Redis client connected')).catch(console.log);
 
-const DEFAULT_EXPIRATION = 3600;
-
 exports.set = set;
 exports.get = get;
 exports.delete = deletePattern;
 
 
 function set(params) {
-  let expiration = params.expiration || DEFAULT_EXPIRATION;
+  let expiration = params.expiration || false;
   let key = params.key || false;
   let data = params.data || false;
 
@@ -26,7 +24,11 @@ function set(params) {
     data = JSON.stringify(data);
   }
 
-  redisClient.setEx(key, expiration, data);
+  if (expiration) {
+    redisClient.setEx(key, expiration, data);
+  } else {
+    redisClient.set(key, data);
+  }
 }
 
 function get(params) {
