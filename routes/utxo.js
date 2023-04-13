@@ -6,6 +6,7 @@ const createError = require('http-errors');
 
 const utxo = require('../src/utxo');
 const blockcypher = require('../src/blockcypher');
+const inscription = require('../src/inscription');
 
 const lookupMode = process.env.LOOKUPMODE;
 const relayMode = process.env.RELAYMODE;
@@ -24,22 +25,14 @@ if (lookupMode === 'utxo') {
 // no params
 
 router.all('/inscriptions/:outpoint/:id/media', function(req, res, next) {
-  utxo.inscriptions(req.params.outpoint).then(data => {
-    let dataIndex = data.findIndex(item => {
-      return item.id === req.params.id;
+  inscription.media.get(req.params.outpoint, req.params.id).then(data => {
+    let buff = Buffer.from(data.media_content, 'base64');
+
+    res.writeHead(200, {
+      'Content-Type': data.media_type,
+      'Content-Length': buff.length
     });
-
-    if (dataIndex === -1) {
-      next(createError("Inscription id not found.."));
-    } else {
-      let buff = Buffer.from(data[dataIndex].media_content, 'base64');
-
-      res.writeHead(200, {
-        'Content-Type': data[dataIndex].media_type,
-        'Content-Length': buff.length
-      });
-      res.end(buff);
-    }
+    res.end(buff);
   }).catch(next);
 });
 

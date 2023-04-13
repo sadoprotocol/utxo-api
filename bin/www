@@ -9,6 +9,7 @@ require('dotenv').config();
 const app = require('../app');
 const debug = require('debug')('node-cli:server');
 const http = require('http');
+const MongoDB = require('../src/mongodb');
 
 /**
  * Get port from environment and store in Express.
@@ -20,6 +21,10 @@ app.set('port', port);
 /**
  * Create HTTP server.
  */
+
+MongoDB.connect()
+  .then(() => console.log("MongoDB connected.."))
+  .catch(err => console.log("Problem connecting MongoDB", err));
 
 const server = http.createServer(app);
 
