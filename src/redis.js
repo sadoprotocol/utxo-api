@@ -44,7 +44,7 @@ function get(params) {
             resolve(data);
           }
         } else {
-          reject(false);
+          resolve(false);
         }
       }).catch(reject);
     }
