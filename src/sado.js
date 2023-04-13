@@ -4,6 +4,7 @@ const bitcoinjs = require('bitcoinjs-lib');
 const moment = require('moment');
 const utxo = require('../src/utxo');
 const infura = require('../src/infura');
+const redis = require('../src/redis');
 
 exports.get = get;
 
@@ -177,6 +178,16 @@ async function get(address) {
     let order_cids = orderbook.cids.orders;
     let offer_cids = orderbook.cids.offers;
 
+    let redisKey = `/sado/get/orders-offers/${order_cids.length}-${offer_cids.length}`;
+
+    let gotCache = await redis.get(redisKey);
+
+    if (gotCache) {
+      return gotCache;
+    }
+
+    await redis.deletePattern('/sado/get/orders-offers/*');
+
     if (order_cids.length > 0) {   
       for (let od = 0; od < order_cids.length; od++) {
         let response = await infura.get(order_cids[od]);
@@ -252,6 +263,12 @@ async function get(address) {
         }
       }
     }
+
+    redis.set({
+      key: redisKey,
+      expiration: 3600 * 24 * 30,
+      data: filtered_orderbook
+    });
   }
 
   return filtered_orderbook;
