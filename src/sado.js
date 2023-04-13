@@ -180,7 +180,7 @@ async function get(address) {
 
     let redisKey = `/sado/get/${address}/orders-offers/${order_cids.length}-${offer_cids.length}`;
 
-    let gotCache = await redis.get(redisKey);
+    let gotCache = await redis.get({ key: redisKey });
 
     if (gotCache) {
       return gotCache;
