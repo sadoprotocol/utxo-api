@@ -1,4 +1,5 @@
 # GENERAL
+NETWORK="regtest"
 PORT=3030
 DIRECTORYPATH=/home/bitcoin-regtest/nodejs-utxo
 LOOKUPMODE="blockcypher"

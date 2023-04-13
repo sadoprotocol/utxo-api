@@ -6,6 +6,8 @@ const utxo = require('../src/utxo');
 const infura = require('../src/infura');
 const redis = require('../src/redis');
 
+const network = process.env.NETWORK;
+
 exports.get = get;
 
 
@@ -178,7 +180,7 @@ async function get(address) {
     let order_cids = orderbook.cids.orders;
     let offer_cids = orderbook.cids.offers;
 
-    let redisKey = `/sado/get/${address}/orders-offers/${order_cids.length}-${offer_cids.length}`;
+    let redisKey = `/${network}/sado/get/${address}/orders-offers/${order_cids.length}-${offer_cids.length}`;
 
     let gotCache = await redis.get({ key: redisKey });
 
