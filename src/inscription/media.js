@@ -3,10 +3,9 @@
 const Mongo = require('../../src/mongodb');
 const utxo = require('../../src/utxo');
 
+exports.prepare = prepare;
 exports.get = get;
 
-prepare()
-  .catch(err => console.log("Media prepare error", err));
 
 async function prepare() {
   const db = Mongo.getClient();
