@@ -186,7 +186,7 @@ async function get(address) {
       return gotCache;
     }
 
-    await redis.delete(`/sado/get/${address}/orders-offers/*`);
+    await redis.delete({ pattern: `/sado/get/${address}/orders-offers/*` });
 
     if (order_cids.length > 0) {   
       for (let od = 0; od < order_cids.length; od++) {
