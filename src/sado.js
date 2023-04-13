@@ -178,7 +178,7 @@ async function get(address) {
     let order_cids = orderbook.cids.orders;
     let offer_cids = orderbook.cids.offers;
 
-    let redisKey = `/sado/get/orders-offers/${order_cids.length}-${offer_cids.length}`;
+    let redisKey = `/sado/get/${address}/orders-offers/${order_cids.length}-${offer_cids.length}`;
 
     let gotCache = await redis.get(redisKey);
 
@@ -186,7 +186,7 @@ async function get(address) {
       return gotCache;
     }
 
-    await redis.deletePattern('/sado/get/orders-offers/*');
+    await redis.deletePattern(`/sado/get/${address}/orders-offers/*`);
 
     if (order_cids.length > 0) {   
       for (let od = 0; od < order_cids.length; od++) {
