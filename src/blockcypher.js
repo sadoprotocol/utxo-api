@@ -123,7 +123,8 @@ async function unspents(address) {
         scriptPubKey: {},
         txid: "",
         value: 0,
-        ordinals: []
+        ordinals: [],
+        inscriptions: []
       }
 
       let tx = await utxo.transaction(u.tx_hash);
@@ -140,6 +141,7 @@ async function unspents(address) {
         if (voutIndex !== -1) {
           data.scriptPubKey = tx.vout[voutIndex].scriptPubKey;
           data.ordinals = tx.vout[voutIndex].ordinals;
+          data.inscriptions = tx.vout[voutIndex].inscriptions;
           data.value = tx.vout[voutIndex].value;
 
           result.push(data);
