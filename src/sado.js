@@ -7,6 +7,19 @@ const infura = require('../src/infura');
 const redis = require('../src/redis');
 
 const network = process.env.NETWORK;
+const blockcypher = require('../src/blockcypher');
+
+const lookupMode = process.env.LOOKUPMODE;
+
+var lookup;
+
+if (lookupMode === 'utxo') {
+  lookup = utxo;
+} else if (lookupMode === 'blockcypher') {
+  lookup = blockcypher;
+} else {
+  throw new Error("Unknown lookup mode.");
+}
 
 exports.get = get;
 
@@ -17,7 +30,7 @@ async function getOwner(outpoint) {
     let txid = locs[0];
     let vout = locs[1];
 
-    let res = await utxo.transaction(txid);
+    let res = await lookup.transaction(txid);
 
     if (
       typeof res === 'object' 
@@ -119,7 +132,7 @@ async function get(address) {
       let txid = vArg[0];
       let vout_n = parseInt(vArg[1]);
 
-      let tx = await utxo.transaction(txid);
+      let tx = await lookup.transaction(txid);
 
       let voutIndex = tx.vout.findIndex(item => {
         return item.n === vout_n;
@@ -137,7 +150,7 @@ async function get(address) {
       let txid = vArg[0];
       let vout_n = parseInt(vArg[1]);
 
-      let tx = await utxo.transaction(txid);
+      let tx = await lookup.transaction(txid);
 
       let voutIndex = tx.vout.findIndex(item => {
         return item.n === vout_n;
@@ -153,7 +166,7 @@ async function get(address) {
 
   // ===
 
-  let txs = await utxo.transactions(address);
+  let txs = await lookup.transactions(address);
 
   if (typeof txs === 'object' && txs.length > 0) {
     for (let i = 0; i < txs.length; i++) {
