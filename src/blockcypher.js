@@ -68,6 +68,7 @@ function get(path, data = false) {
 
   if (data) {
     requestObject.body = JSON.stringify(data);
+    requestObject.method = 'POST';
   }
 
   return new Promise(resolve => {
