@@ -11,6 +11,7 @@ const debug = require('debug')('node-cli:server');
 const http = require('http');
 const MongoDB = require('../src/mongodb');
 const inscription = require('../src/inscription');
+const cache = require('../src/cache');
 
 /**
  * Get port from environment and store in Express.
@@ -27,6 +28,7 @@ MongoDB.connect()
   .then(async () => {
     console.log("MongoDB connected..");
     await inscription.media.prepare();
+    await cache.transactionsAll.prepare();
   }).catch(err => console.log("Problem connecting MongoDB", err));
 
 const server = http.createServer(app);

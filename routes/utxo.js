@@ -7,6 +7,7 @@ const createError = require('http-errors');
 const utxo = require('../src/utxo');
 const blockcypher = require('../src/blockcypher');
 const inscription = require('../src/inscription');
+const cache = require('../src/cache');
 
 const lookupMode = process.env.LOOKUPMODE;
 const relayMode = process.env.RELAYMODE;
@@ -116,7 +117,7 @@ router.all('/balance', function(req, res, next) {
 });
 
 router.all('/transactions', function(req, res, next) {
-  lookup.transactions(req.body.address).then(transactions => {
+  cache.transactionsAll.fetch({ address: req.body.address }).then(transactions => {
     res.json({
       success: true,
       message: 'Transactions of ' + req.body.address,
