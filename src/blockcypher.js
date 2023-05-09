@@ -45,6 +45,7 @@ exports.transaction = transaction;
 exports.transactions = transactions;
 exports.unspents = unspents;
 exports.relay = relay;
+exports.fee = fee;
 
 
 function get(path, data = false) {
@@ -162,9 +163,84 @@ async function relay(hex) {
   return relayed.hash || relayed.tx.hash;
 }
 
+async function fee(params) {
+  let old = params.old || 5;
+  let older = params.older || 15;
+  let default_fee = params.defaultFee || 100;
+
+  // ==
+
+  let chain = await chainInfo();
+
+  // ==
+
+  let currentBlock = await block(chain.height);
+
+  let txs1 = currentBlock.n_tx;
+  let fees1 = currentBlock.fees;
+  let average1 = parseInt(fees1 / txs1);
+
+  // ==
+
+  let oldBlock = await block(chain.height - old);
+
+  let txs2 = oldBlock.n_tx;
+  let fees2 = oldBlock.fees;
+  let average2 = parseInt(fees2 / txs2);
+
+  // ==
+
+  let olderBlock = await block(chain.height - older);
+
+  let txs3 = olderBlock.n_tx;
+  let fees3 = olderBlock.fees;
+  let average3 = parseInt(fees3 / txs3);
+
+  // ==
+
+  if (fees1 < default_fee) average1 = default_fee;
+  if (fees2 < default_fee) average2 = default_fee;
+  if (fees3 < default_fee) average3 = default_fee;
+
+  let averageFee = parseInt((average1 + average2 + average3) / 3);
+
+  // ==
+
+  let fee_object = {
+    current: {
+      txs: txs1,
+      fee: fees1,
+      average: average1,
+      block: chain.height
+    },
+    old: {
+      txs: txs2,
+      fee: fees2,
+      average: average2,
+      block: chain.height - old
+    },
+    older: {
+      txs: txs3,
+      fee: fees3,
+      average: average3,
+      block: chain.height - older
+    },
+    average: averageFee
+  }
+
+  return fee_object;
+}
+
 
 // ==
 
+async function chainInfo() {
+  return await get('');
+}
+
+async function block(height) {
+  return await get('blocks/' + height);
+}
 
 function intToStr(num, decimal) {
   if (typeof num === 'string') {

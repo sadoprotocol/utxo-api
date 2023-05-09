@@ -137,5 +137,17 @@ router.all('/unspents', function(req, res, next) {
 });
 
 
+// multi
+
+router.all('/fees', function(req, res, next) {
+  lookup.fee(req.body).then(fees => {
+    res.json({
+      success: true,
+      message: 'Average fees are',
+      rdata: fees
+    });
+  }).catch(next);
+});
+
 
 module.exports = router;
