@@ -178,6 +178,8 @@ async function fee(params) {
 
   let txs1 = currentBlock.n_tx;
   let fees1 = currentBlock.fees;
+  let size1 = currentBlock.size;
+  let vsize1 = currentBlock.vsize;
   let average1 = parseInt(fees1 / txs1);
 
   // ==
@@ -186,6 +188,8 @@ async function fee(params) {
 
   let txs2 = oldBlock.n_tx;
   let fees2 = oldBlock.fees;
+  let size2 = oldBlock.size;
+  let vsize2 = oldBlock.vsize;
   let average2 = parseInt(fees2 / txs2);
 
   // ==
@@ -194,6 +198,8 @@ async function fee(params) {
 
   let txs3 = olderBlock.n_tx;
   let fees3 = olderBlock.fees;
+  let size3 = olderBlock.size;
+  let vsize3 = olderBlock.vsize;
   let average3 = parseInt(fees3 / txs3);
 
   // ==
@@ -211,19 +217,25 @@ async function fee(params) {
       txs: txs1,
       fee: fees1,
       average: average1,
-      block: chain.height
+      block: chain.height,
+      size: size1,
+      vsize: vsize1
     },
     old: {
       txs: txs2,
       fee: fees2,
       average: average2,
-      block: chain.height - old
+      block: chain.height - old,
+      size: size2,
+      vsize: vsize2
     },
     older: {
       txs: txs3,
       fee: fees3,
       average: average3,
-      block: chain.height - older
+      block: chain.height - older,
+      size: size3,
+      vsize: vsize3
     },
     average: averageFee
   }
