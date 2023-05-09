@@ -107,6 +107,7 @@ async function fetch(params) {
   });
   pipelines.push({
     $project: {
+      _id: 0,
       address: 0,
       sado: 0
     }
