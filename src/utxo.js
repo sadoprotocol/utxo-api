@@ -62,6 +62,7 @@ async function transaction(txid, options = false) {
   let res = false;
 
   if (typeof options === 'object') {
+    options = JSON.stringify(options);
     res = await rpc([ 'transaction', txid, options ]);
   } else {
     res = await rpc([ 'transaction', txid ]);
