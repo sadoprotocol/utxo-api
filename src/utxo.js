@@ -58,8 +58,14 @@ async function balance(address) {
   }
 }
 
-async function transaction(txid) {
-  let res = await rpc([ 'transaction', txid ]);
+async function transaction(txid, options = false) {
+  let res = false;
+
+  if (typeof options === 'object') {
+    res = await rpc([ 'transaction', txid, options ]);
+  } else {
+    res = await rpc([ 'transaction', txid ]);
+  }
 
   try {
     return JSON.parse(res);

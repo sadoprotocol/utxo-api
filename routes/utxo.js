@@ -86,7 +86,7 @@ router.all(['/transaction'], function(req, res, next) {
 });
 
 router.all('/transaction', function(req, res, next) {
-  lookup.transaction(req.body.txid).then(transaction => {
+  lookup.transaction(req.body.txid, req.body.options).then(transaction => {
     res.json({
       success: true,
       message: 'Transaction of ' + req.body.txid,

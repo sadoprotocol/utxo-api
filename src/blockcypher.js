@@ -88,8 +88,8 @@ async function balance(address) {
   };
 }
 
-async function transaction(txid) {
-  return await utxo.transaction(txid);
+async function transaction(txid, options = false) {
+  return await utxo.transaction(txid, options);
 }
 
 async function transactions(address) {
