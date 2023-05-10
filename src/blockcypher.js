@@ -93,7 +93,7 @@ async function transaction(txid) {
 }
 
 async function transactions(address) {
-  let txs = await get('addrs/' + address + '/full');
+  let txs = await get('addrs/' + address);
 
   let result = [];
 
