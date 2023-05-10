@@ -97,9 +97,9 @@ async function transactions(address) {
 
   let result = [];
 
-  if (typeof txs === 'object' && txs.txs) {
+  if (typeof txs === 'object' && txs.txrefs) {
     for (let i = 0; i < txs.txs.length; i++) {
-      let tx = await utxo.transaction(txs.txs[i].hash);
+      let tx = await utxo.transaction(txs.txs[i].tx_hash);
       result.push(tx);
     }
   }
