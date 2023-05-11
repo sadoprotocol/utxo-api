@@ -72,10 +72,17 @@ function get(path, data = false) {
     requestObject.method = 'POST';
   }
 
-  return new Promise(resolve => {
+  return new Promise((resolve, reject) => {
     fetch (url, requestObject)
       .then(response => response.json())
-      .then(response => resolve(response));
+      .then(response => {
+        if (response.error) {
+          reject(new Error("BlockCypher: " + response.error));
+        } else {
+          resolve(response)
+        }
+      })
+      .catch(reject);
   });
 }
 
