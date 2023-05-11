@@ -55,7 +55,7 @@ function transactions_options(options) {
   options = JSON.parse(JSON.stringify(options));
 
   if (options.noord === undefined) {
-    options.noord = true;
+    options.noord = false;
   }
 
   if (!options.limit || isNaN(options.limit)) {
