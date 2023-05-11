@@ -129,7 +129,7 @@ async function transactions(address, options = {}) {
   }
 }
 
-async function unspents(address) {
+async function unspents(address, options = false) {
   let bUnspents = await get('addrs/' + address + '?unspentOnly=true&includeScript=true');
 
   let result = [];
@@ -151,7 +151,7 @@ async function unspents(address) {
         inscriptions: []
       }
 
-      let tx = await utxo.transaction(u.tx_hash);
+      let tx = await utxo.transaction(u.tx_hash, options);
 
       if (tx) {
         data.txid = tx.txid;
