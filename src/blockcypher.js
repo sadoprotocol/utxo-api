@@ -182,7 +182,11 @@ async function relay(hex) {
     tx: hex
   });
 
-  return relayed.hash || relayed.tx.hash;
+  if (!relayed.tx) {
+    return relayed;
+  }
+
+  return relayed.tx.hash;
 }
 
 async function fee(params) {
