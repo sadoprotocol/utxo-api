@@ -54,8 +54,8 @@ async function prepare() {
 function transactions_options(options) {
   options = JSON.parse(JSON.stringify(options));
 
-  if (options.ord === undefined) {
-    options.ord = true;
+  if (options.noord === undefined) {
+    options.noord = true;
   }
 
   if (!options.limit || isNaN(options.limit)) {
@@ -174,7 +174,7 @@ async function got_cache_transactions(database, address, options) {
     address: 0
   }
 
-  if (!options.ord) {
+  if (options.noord) {
     project['vout.ordinals'] = 0;
     project['vout.inscriptions'] = 0;
   }

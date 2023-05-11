@@ -128,7 +128,7 @@ router.all('/transactions', function(req, res, next) {
 });
 
 router.all('/unspents', function(req, res, next) {
-  lookup.unspents(req.body.address).then(unspents => {
+  lookup.unspents(req.body.address, req.body.options).then(unspents => {
     res.json({
       success: true,
       message: 'Unspents of ' + req.body.address,

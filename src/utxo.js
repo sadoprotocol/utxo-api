@@ -92,8 +92,15 @@ async function transactions(address, options = false) {
   }
 }
 
-async function unspents(address) {
-  let res = await rpc([ 'unspents', address ]);
+async function unspents(address, options = false) {
+  let res = false;
+
+  if (typeof options === 'object') {
+    options = JSON.stringify(options);
+    res = await rpc([ 'unspents', address, options ]);
+  } else {
+    res = await rpc([ 'unspents', address ]);
+  }
 
   try {
     return JSON.parse(res);
