@@ -8,7 +8,6 @@ const utxo = require('../../src/utxo');
 const blockcypher = require('../../src/blockcypher');
 
 const lookupMode = process.env.LOOKUPMODE;
-const repeaterWait = process.env.CACHEREPEATER || 5;
 
 var lookup;
 
@@ -70,9 +69,12 @@ function transactions_options(options) {
     options.nowitness = false;
   }
 
-
-  if (options.before === undefined || isNaN(options.before)) {
+  if (!options.before || isNaN(options.before)) {
     options.before = 0;
+  }
+
+  if (!options.after || isNaN(options.after)) {
+    options.after = 0;
   }
 
   return options;
@@ -134,6 +136,102 @@ async function refresh(address, options) {
   }
 }
 
+async function get_address_blocktip(database, address, rightAfter = false, inclusive = false) {
+  const db = Mongo.getClient();
+
+  let pipelines = [];
+
+  let match = {
+    "address": address
+  };
+
+  if (rightAfter) {
+    if (inclusive) {
+      match.blockheight = { $gte: rightAfter };
+    } else {
+      match.blockheight = { $gt: rightAfter };
+    }
+  }
+
+  let sort = {
+    "address": 1,
+    "blockheight": -1
+  }
+
+  if (rightAfter) {
+    sort.blockheight = 1;
+  }
+
+  pipelines.push({
+    $match: match
+  });
+  pipelines.push({
+    $sort: sort
+  });
+  pipelines.push({
+    $limit: 1
+  });
+
+  let cursor = db.collection(database).aggregate(pipelines);
+  let blockheight = 0;
+
+  while(await cursor.hasNext()) {
+    const doc = await cursor.next();
+    blockheight = doc.blockheight;
+    break;
+  }
+
+  return blockheight;
+}
+
+async function get_address_blockfloor(database, address, rightBefore = false, inclusive = false) {
+  const db = Mongo.getClient();
+
+  let pipelines = [];
+
+  let match = {
+    "address": address
+  };
+
+  if (rightBefore) {
+    if (inclusive) {
+      match.blockheight = { $lte: rightBefore };
+    } else {
+      match.blockheight = { $lt: rightBefore };
+    }
+  }
+
+  let sort = {
+    "address": 1,
+    "blockheight": 1
+  }
+
+  if (rightBefore) {
+    sort.blockheight = -1;
+  }
+
+  pipelines.push({
+    $match: match
+  });
+  pipelines.push({
+    $sort: sort
+  });
+  pipelines.push({
+    $limit: 1
+  });
+
+  let cursor = db.collection(database).aggregate(pipelines);
+  let blockheight = 0;
+
+  while(await cursor.hasNext()) {
+    const doc = await cursor.next();
+    blockheight = doc.blockheight;
+    break;
+  }
+
+  return blockheight;
+}
+
 async function got_cache_transactions(database, address, options) {
   options = JSON.parse(JSON.stringify(options));
 
@@ -157,9 +255,29 @@ async function got_cache_transactions(database, address, options) {
     match.blockheight = { $lte: options.before };
   }
 
+  let reverse = false;
+  let negate = false;
+
+  if (options.after !== 0 && !isNaN(options.after)) {
+    if (typeof match.blockheight === 'object') {
+      negate = true;
+      match.blockheight = { 
+        $lte: options.before,
+        $gte: options.after
+      };
+    } else {
+      reverse = true;
+      match.blockheight = { $gte: options.after };
+    }
+  }
+
   let sort = {
     "address": 1,
     "blockheight": -1
+  }
+
+  if (reverse) {
+    sort.blockheight = 1;
   }
 
   pipelines.push({
@@ -192,30 +310,62 @@ async function got_cache_transactions(database, address, options) {
   });
 
   let cursor = db.collection(database).aggregate(pipelines, { allowDiskUse:true });
-  let counter = 0;
   let result = [];
+  let height = 0;
   let blockheight = 0;
 
   while(await cursor.hasNext()) {
-    counter++;
-
     const doc = await cursor.next();
 
-    if (blockheight === doc.blockheight) {
-      // don't do anything
-    } else if (result.length >= options.limit) {
-      blockheight = doc.blockheight;
-      break;
-    }
+    if (reverse) {
+      if (!blockheight) {
+        blockheight = doc.blockheight;
+      }
 
-    result.push(doc);
-    blockheight = doc.blockheight;
+      if (height === doc.blockheight) {
+        // don't do anything
+      } else if (result.length >= options.limit) {
+        height = doc.blockheight;
+        break;
+      }
+
+      result.unshift(doc);
+      height = doc.blockheight;
+    } else {
+      if (!height) {
+        height = doc.blockheight;
+      }
+
+      if (blockheight === doc.blockheight) {
+        // don't do anything
+      } else if (result.length >= options.limit) {
+        blockheight = doc.blockheight;
+        break;
+      }
+
+      result.push(doc);
+      blockheight = doc.blockheight;
+    }
   }
 
-  options.before = blockheight;
+  options.after = await get_address_blocktip(database, address, height, reverse);
+  if (negate) {
+    reverse = !reverse;
+  }
+  options.before = await get_address_blockfloor(database, address, blockheight, !reverse);
 
-  if (counter < options.limit) {
+  // ==
+
+  let addressBlockFloor = await get_address_blockfloor(database, address);
+
+  if (addressBlockFloor === blockheight) {
     options.before = false;
+  }
+
+  let addressBlockTip = await get_address_blocktip(database, address);
+
+  if (addressBlockTip === height) {
+    options.after = false;
   }
 
   return {
