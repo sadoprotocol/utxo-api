@@ -11,7 +11,6 @@ const lookupMode = process.env.LOOKUPMODE;
 const repeaterWait = process.env.CACHEREPEATER || 5;
 
 var lookup;
-var busy = false;
 
 if (lookupMode === 'utxo') {
   lookup = utxo;
@@ -24,61 +23,126 @@ if (lookupMode === 'utxo') {
 
 exports.prepare = prepare;
 exports.fetch = fetch;
-exports.refresh = refresh;
 
 
 
 async function prepare() {
   // Create collection and indexes
-  let createCollections = [ 'cache_transactions_all' ];
+  let createCollections = [ 'api_address_transactions' ];
   let createCollectionsIndex = {
-    "cache_transactions_all": [
+    "api_address_transactions": [
       {
         "address": 1,
-        "confirmation": 1,
-        "sado": 1
+        "blockheight": 1
       },
       {
         "address": 1,
-        "confirmation": -1,
-        "sado": 1
-      },
-      {
-        "address": 1,
-        "sado": 1
-      },
-      {
-        "address": 1,
-        "txid": 1
-      },
+        "blockheight": -1
+      }
     ]
   };
 
   await Mongo.createCollectionAndIndexes(createCollections, createCollectionsIndex);
 
-  await repeater();
-  setInterval(async () => {
-    await repeater();
-  }, repeaterWait * 60000);
+  repeater().catch(err => {
+    console.log("Lookup transactions repeater uncought error", err);
+  });
 }
 
-async function fetch(params) {
-  let address = params.address || false;
-  let confirmationSort = params.confirmationSort || 1;
-  let sado = params.sado || false;
+// ==
 
+function transactions_options(options) {
+  options = JSON.parse(JSON.stringify(options));
+
+  if (options.ord === undefined) {
+    options.ord = true;
+  }
+
+  if (!options.limit || isNaN(options.limit)) {
+    options.limit = 50;
+  }
+
+  if (options.nohex === undefined) {
+    options.nohex = false;
+  }
+
+  if (options.nowitness === undefined) {
+    options.nowitness = false;
+  }
+
+
+  if (options.before === undefined || isNaN(options.before)) {
+    options.before = 0;
+  }
+
+  return options;
+}
+
+async function refresh_api(address) {
   if (!address) {
     throw new Error("Expecting address.");
   }
 
-  if (confirmationSort === -1 || confirmationSort === 1) {
-    // OK
-  } else {
-    throw new Error('Invalid confirmationSort value.');
+  if (lookupMode === 'utxo') {
+    throw new Error("Incorrect process.");
   }
 
-  if (sado && !Array.isArray(sado)) {
-    throw new Error('Invalid sado value.');
+  console.log('transactions ' + address);
+
+  let result = await lookup.transactions(address);
+
+  if (
+    result.txs 
+    && result.txs.length 
+    && result.options 
+    && result.options.before === false
+  ) {
+    result.options.before = 0;
+  }
+
+  while(result.options.before !== false) {
+    if (result && Array.isArray(result.txs) && result.txs.length) {
+      const db = Mongo.getClient();
+
+      for (let i = 0; i < result.txs.length; i++) {
+        let tx = result.txs[i];
+
+        tx.address = address;
+
+        await db.collection("api_address_transactions").updateOne({
+          "address": address,
+          "txid": tx.txid
+        }, {
+          $set: tx
+        }, {
+          upsert: true
+        });
+      }
+    }
+
+    result = await lookup.transactions(address, result.options);
+  }
+}
+
+async function refresh(address, options) {
+  options = JSON.parse(JSON.stringify(options));
+
+  if (lookupMode === 'utxo') {
+    await utxo.transactions(address, options);
+  } else if (lookupMode === 'blockcypher') {
+    await refresh_api(address);
+  }
+}
+
+async function got_cache_transactions(database, address, options) {
+  options = JSON.parse(JSON.stringify(options));
+
+  if (!database) {
+    throw new Error("Expecting database.");
+  }
+
+  if (!address) {
+    throw new Error("Expecting address.");
   }
 
   const db = Mongo.getClient();
@@ -89,14 +153,13 @@ async function fetch(params) {
     "address": address
   };
 
-  let sort = {
-    "address": 1,
-    "confirmation": 1
+  if (options.before !== 0 && !isNaN(options.before)) {
+    match.blockheight = { $lte: options.before };
   }
 
-  if (sado) {
-    match['sado'] = { $in: sado };
-    sort['sado'] = 1;
+  let sort = {
+    "address": 1,
+    "blockheight": -1
   }
 
   pipelines.push({
@@ -105,76 +168,98 @@ async function fetch(params) {
   pipelines.push({
     $sort: sort
   });
+
+  let project = {
+    _id: 0,
+    address: 0
+  }
+
+  if (!options.ord) {
+    project['vout.ordinals'] = 0;
+    project['vout.inscriptions'] = 0;
+  }
+
+  if (options.nohex) {
+    project.hex = 0;
+  }
+
+  if (options.nowitness) {
+    project['vin.txinwitness'] = 0;
+  }
+
   pipelines.push({
-    $project: {
-      _id: 0,
-      address: 0,
-      sado: 0
-    }
+    $project: project
   });
 
-  let result = await db.collection("cache_transactions_all").aggregate(pipelines, { allowDiskUse:true }).toArray();
+  let cursor = db.collection(database).aggregate(pipelines, { allowDiskUse:true });
+  let counter = 0;
+  let result = [];
+  let blockheight = 0;
 
-  if (result && Array.isArray(result) && result.length) {
-    return result;
+  while(await cursor.hasNext()) {
+    counter++;
+
+    const doc = await cursor.next();
+
+    if (blockheight === doc.blockheight) {
+      // don't do anything
+    } else if (result.length >= options.limit) {
+      blockheight = doc.blockheight;
+      break;
+    }
+
+    result.push(doc);
+    blockheight = doc.blockheight;
   }
 
-  return await refresh(params);
+  options.before = blockheight;
+
+  if (counter < options.limit) {
+    options.before = false;
+  }
+
+  return {
+    txs: result,
+    options
+  }
 }
 
-async function refresh(params) {
-  let address = params.address || false;
+async function fetch(address, options = {}) {
+  options = JSON.parse(JSON.stringify(options));
 
-  if (!address) {
-    throw new Error("Expecting address.");
-  }
+  return new Promise(async (resolve, reject) => {
+    options = transactions_options(options);
+    let database = false;
 
-  let transactions = await lookup.transactions(address);
+    if (lookupMode === 'utxo') {
+      database = 'address_transactions';
+    } else if (lookupMode === 'blockcypher') {
+      database = 'api_address_transactions';
+    }
 
-  if (transactions && Array.isArray(transactions) && transactions.length) {
-    const db = Mongo.getClient();
+    try {
+      let gotCache = await got_cache_transactions(database, address, options);
 
-    for (let i = 0; i < transactions.length; i++) {
-      let tx = transactions[i];
-
-      tx.address = address;
-      
-      // check if has sado
-      for (let o = 0; o < tx.vout.length; o++) {
-        if (tx.vout[o].scriptPubKey && tx.vout[o].scriptPubKey.utf8 && tx.vout[o].scriptPubKey.utf8.indexOf('sado=') === 0) {
-          tx.sado = [];
-
-          if (tx.vout[o].scriptPubKey.utf8.indexOf('sado=offer') === 0) {
-            tx.sado.push('offer');
-          }
-
-          if (tx.vout[o].scriptPubKey.utf8.indexOf('sado=order') === 0) {
-            tx.sado.push('order');
-          }
-        }
+      if (gotCache && gotCache.txs && gotCache.txs.length) {
+        resolve(gotCache);
+        return;
       }
 
-      await db.collection("cache_transactions_all").updateOne({
-        "address": address,
-        "txid": tx.txid
-      }, {
-        $set: tx
-      }, {
-        upsert: true
-      });
-    }
-  }
+      setTimeout(async () => {
+        resolve(await got_cache_transactions(database, address, options));
+      }, 95000);
 
-  return transactions;
+      await refresh(address, options);
+
+      resolve(await got_cache_transactions(database, address, options));
+    } catch (err) {
+      reject(err);
+    }
+  });
 }
 
 async function repeater() {
-  if (busy) {
-    console.log('Still busy..');
-    return false;
-  }
-
-  busy = true;
+  console.log("Repeating executing");
 
   const db = Mongo.getClient();
 
@@ -189,15 +274,19 @@ async function repeater() {
     }
   });
 
-  let result = await db.collection("cache_transactions_all").aggregate(pipelines, { allowDiskUse:true }).toArray();
+  let cursor = db.collection("api_address_transactions").aggregate(pipelines, { allowDiskUse: true });
+  let counter = 0;
 
-  if (result && Array.isArray(result) && result.length) {
-    for (let i = 0; i < result.length; i++) {
-      await refresh({
-        address: result[i]._id
-      });
-    }
+  while(await cursor.hasNext()) {
+    counter++;
+    const doc = await cursor.next();
+    await refresh_api(doc._id);
   }
 
-  busy = false;
+  if (counter < 50) {
+    await new Promise(resolve => setTimeout(resolve, 300000));
+    await repeater();
+  } else {
+    await repeater();
+  }
 }

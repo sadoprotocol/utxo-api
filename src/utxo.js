@@ -75,8 +75,15 @@ async function transaction(txid, options = false) {
   }
 }
 
-async function transactions(address) {
-  let res = await rpc([ 'transactions', address ]);
+async function transactions(address, options = false) {
+  let res = false;
+
+  if (typeof options === 'object') {
+    options = JSON.stringify(options);
+    res = await rpc([ 'transactions', address, options ]);
+  } else {
+    res = await rpc([ 'transactions', address ]);
+  }
 
   try {
     return JSON.parse(res);

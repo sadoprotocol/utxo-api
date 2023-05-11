@@ -67,7 +67,7 @@ function get(path, data = false) {
     }
   };
 
-  if (data) {
+  if (data && Object.keys(data).length !== 0) {
     requestObject.body = JSON.stringify(data);
     requestObject.method = 'POST';
   }
@@ -92,19 +92,41 @@ async function transaction(txid, options = false) {
   return await utxo.transaction(txid, options);
 }
 
-async function transactions(address) {
-  let txs = await get('addrs/' + address);
+async function transactions(address, options = {}) {
+  let url = 'addrs/' + address
+  let data = {};
+
+  console.log('retrieving blockcypher', url);
+
+  if (options.limit !== undefined && !isNaN(options.limit)) {
+    data.limit = options.limit;
+  }
+
+  if (options.before !== 0 && !isNaN(options.before)) {
+    data.before = options.before;
+  }
+
+  let txs = await get(url, data);
+
+  if (txs.hasMore) {
+    options.before = txs.txrefs[txs.txrefs.length - 1].block_height;
+  } else {
+    options.before = false;
+  }
 
   let result = [];
 
   if (typeof txs === 'object' && txs.txrefs) {
     for (let i = 0; i < txs.txrefs.length; i++) {
-      let tx = await utxo.transaction(txs.txrefs[i].tx_hash);
+      let tx = await utxo.transaction(txs.txrefs[i].tx_hash, options);
       result.push(tx);
     }
   }
 
-  return result;
+  return {
+    txs: result,
+    options
+  }
 }
 
 async function unspents(address) {

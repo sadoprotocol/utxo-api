@@ -117,11 +117,12 @@ router.all('/balance', function(req, res, next) {
 });
 
 router.all('/transactions', function(req, res, next) {
-  cache.transactionsAll.fetch({ address: req.body.address }).then(transactions => {
+  cache.transactionsAll.fetch(req.body.address, req.body.options).then(result => {
     res.json({
       success: true,
       message: 'Transactions of ' + req.body.address,
-      rdata: transactions
+      rdata: result.txs,
+      options: result.options
     });
   }).catch(next);
 });
