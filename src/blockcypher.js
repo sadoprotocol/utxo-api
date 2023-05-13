@@ -137,7 +137,7 @@ async function transactions(address, options = {}) {
 }
 
 async function unspents(address, options = false) {
-  let bUnspents = await get('addrs/' + address + '?unspentOnly=true&includeScript=true');
+  let bUnspents = await get('addrs/' + address + '?limit=100&unspentOnly=true&includeScript=true');
 
   let result = [];
 
