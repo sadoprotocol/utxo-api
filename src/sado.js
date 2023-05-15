@@ -8,6 +8,7 @@ const redis = require('../src/redis');
 
 const network = process.env.NETWORK;
 const blockcypher = require('../src/blockcypher');
+const sochain = require('../src/sochain');
 
 const lookupMode = process.env.LOOKUPMODE;
 
@@ -17,6 +18,8 @@ if (lookupMode === 'utxo') {
   lookup = utxo;
 } else if (lookupMode === 'blockcypher') {
   lookup = blockcypher;
+} else if (lookupMode === 'sochain') {
+  lookup = sochain;
 } else {
   throw new Error("Unknown lookup mode.");
 }

@@ -6,6 +6,7 @@ const createError = require('http-errors');
 
 const utxo = require('../src/utxo');
 const blockcypher = require('../src/blockcypher');
+const sochain = require('../src/sochain');
 const inscription = require('../src/inscription');
 const cache = require('../src/cache');
 
@@ -18,6 +19,8 @@ if (lookupMode === 'utxo') {
   lookup = utxo;
 } else if (lookupMode === 'blockcypher') {
   lookup = blockcypher;
+} else if (lookupMode === 'sochain') {
+  lookup = sochain;
 } else {
   throw new Error("Unknown lookup mode.");
 }
@@ -61,6 +64,8 @@ router.all(['/relay'], function(req, res, next) {
 router.all('/relay', function(req, res, next) {
   if (relayMode === 'blockcypher') {
     lookup = blockcypher;
+  } else if (relayMode === 'sochain') {
+    lookup = sochain;
   } else {
     lookup = utxo;
   }

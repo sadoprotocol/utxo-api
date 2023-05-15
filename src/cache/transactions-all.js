@@ -6,6 +6,7 @@ const Mongo = require('../../src/mongodb');
 
 const utxo = require('../../src/utxo');
 const blockcypher = require('../../src/blockcypher');
+const sochain = require('../../src/sochain');
 
 const lookupMode = process.env.LOOKUPMODE;
 
@@ -15,6 +16,8 @@ if (lookupMode === 'utxo') {
   lookup = utxo;
 } else if (lookupMode === 'blockcypher') {
   lookup = blockcypher;
+} else if (lookupMode === 'sochain') {
+  lookup = sochain;
 } else {
   throw new Error("Unknown lookup mode.");
 }
@@ -131,7 +134,7 @@ async function refresh(address, options) {
 
   if (lookupMode === 'utxo') {
     await utxo.transactions(address, options);
-  } else if (lookupMode === 'blockcypher') {
+  } else {
     await refresh_api(address);
   }
 }
@@ -383,7 +386,7 @@ async function fetch(address, options = {}) {
 
     if (lookupMode === 'utxo') {
       database = 'address_transactions';
-    } else if (lookupMode === 'blockcypher') {
+    } else {
       database = 'api_address_transactions';
     }
 

@@ -100,7 +100,7 @@ async function transaction(txid, options = false) {
 }
 
 async function transactions(address, options = {}) {
-  let url = 'addrs/' + address
+  let url = 'addrs/' + address;
   let data = {};
 
   console.log('retrieving blockcypher', url);
