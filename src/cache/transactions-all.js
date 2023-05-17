@@ -477,9 +477,6 @@ async function repeater() {
     let then = date_add_hours(new Date(doc.requested), cacheExpiryHour);
     then = then.getTime();
 
-    console.log('now', now);
-    console.log('then', then);
-
     if (now < then) {
       await refresh_api(doc.address);
     }

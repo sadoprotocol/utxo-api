@@ -18,7 +18,6 @@
     "moment": "^2.29.4",
     "mongodb": "^5.1.0",
     "morgan": "~1.9.1",
-    "public-ip": "^4.0.3",
     "redis": "^4.6.5",
     "redis-delete-pattern": "^0.1.0"
   }
