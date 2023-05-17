@@ -1,0 +1,25 @@
+#!/usr/bin/env node
+
+require('dotenv').config();
+
+const lookupMode = process.env.LOOKUPMODE;
+const blockcypher = require('../src/blockcypher');
+const sochain = require('../src/sochain');
+
+var lookup;
+
+if (lookupMode === 'utxo') {
+  return false;
+} else if (lookupMode === 'blockcypher') {
+  lookup = blockcypher;
+} else if (lookupMode === 'sochain') {
+  lookup = sochain;
+} else {
+  throw new Error("Unknown lookup mode.");
+}
+
+lookup.usage().then(res => {
+  console.log(res);
+}).catch(err => {
+  console.log('Unable to retrieve usage.');
+})

@@ -47,6 +47,7 @@ exports.transactions = transactions;
 exports.unspents = unspents;
 exports.relay = relay;
 exports.fee = fee;
+exports.usage = usage;
 
 
 function get(path, data = false) {
@@ -99,17 +100,15 @@ async function transaction(txid, options = false) {
 
 async function transactions(address, options = {}) {
   try {
-    let url = 'transactions/' + network + '/' + address;
+    if (!options.before || isNaN(options.before)) {
+      options.before = 1;
+    }
+
+    let url = 'transactions/' + network + '/' + address + '/' + options.before;
 
     console.log('retrieving sochain', url);
 
-    if (options.before !== 0 && !isNaN(options.before)) {
-      url += '/' + options.before;
-    }
-
     let txs = await get(url);
-
-    options.before++;
 
     let result = [];
 
@@ -118,6 +117,10 @@ async function transactions(address, options = {}) {
         let tx = await utxo.transaction(txs.data.transactions[i].hash, options);
         result.push(tx);
       }
+
+      options.before++;
+    } else {
+      options.before = false;
     }
 
     return {
@@ -293,6 +296,22 @@ async function fee(params) {
   }
 
   return fee_object;
+}
+
+async function usage() {
+  try {
+    let res = await get('account_info');
+
+    return {
+      "current": res.num_requests_used.today,
+      "total": res.plan.max_daily_requests
+    }
+  } catch (err) {
+    return {
+      "current": 1,
+      "total": 1
+    }
+  }
 }
 
 

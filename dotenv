@@ -4,6 +4,7 @@ PORT=3030
 DIRECTORYPATH=/home/bitcoin-regtest/nodejs-utxo
 LOOKUPMODE="blockcypher"
 RELAYMODE="utxo"
+IPTRACK='v4'
 
 # INFURA
 INFURAGATEWAY="https://sado.infura-ipfs.io"
@@ -29,3 +30,4 @@ MONGOPASSWORD=""
 
 # CACHE
 CACHEREPEATER=5
+CACHEEXPIRYHOUR=3

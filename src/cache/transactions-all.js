@@ -9,6 +9,8 @@ const blockcypher = require('../../src/blockcypher');
 const sochain = require('../../src/sochain');
 
 const lookupMode = process.env.LOOKUPMODE;
+const repeatDurationDelay = process.env.CACHEREPEATER;
+const cacheExpiryHour = process.env.CACHEEXPIRYHOUR;
 
 var lookup;
 
@@ -40,6 +42,14 @@ async function prepare() {
       {
         "address": 1,
         "blockheight": -1
+      },
+      {
+        "address": 1,
+        "txid": 1
+      },
+      {
+        "address": 1,
+        "time": -1
       }
     ]
   };
@@ -92,40 +102,63 @@ async function refresh_api(address) {
     throw new Error("Incorrect process.");
   }
 
-  console.log('transactions ' + address);
+  const db = Mongo.getClient();
 
-  let result = await lookup.transactions(address);
+  let options = transactions_options({});
+  let foundExist = false;
+  let result = false;
 
-  if (
-    result.txs 
-    && result.txs.length 
-    && result.options 
-    && result.options.before === false
-  ) {
-    result.options.before = 0;
-  }
+  while(options.before !== false) {
+    result = await lookup.transactions(address, options);
+    options = result.options;
 
-  while(result.options.before !== false) {
     if (result && Array.isArray(result.txs) && result.txs.length) {
-      const db = Mongo.getClient();
-
       for (let i = 0; i < result.txs.length; i++) {
         let tx = result.txs[i];
 
         tx.address = address;
 
-        await db.collection("api_address_transactions").updateOne({
+        let exist = await db.collection("api_address_transactions").findOne({
           "address": address,
           "txid": tx.txid
-        }, {
-          $set: tx
-        }, {
-          upsert: true
         });
+
+        if (exist) {
+          foundExist = true;
+          console.log('found exists.');
+          break;
+        }
+
+        await db.collection("api_address_transactions").insertOne(tx);
+      }
+
+      if (foundExist) {
+        break;
       }
     }
+  }
 
-    result = await lookup.transactions(address, result.options);
+  if (foundExist) {
+    let cursor = await db.collection("api_address_transactions").find({
+      "address": address
+    });
+
+    cursor.sort({ "time": -1 });
+
+    while(await cursor.hasNext()) {
+      const doc = await cursor.next();
+
+      let tx = await lookup.transaction(doc.txid);
+
+      await db.collection("api_address_transactions").updateOne({
+        "address": address,
+        "txid": tx.txid
+      }, {
+        $set: tx
+      }, {
+        upsert: true
+      });
+    }
   }
 }
 
@@ -390,6 +423,8 @@ async function fetch(address, options = {}) {
       database = 'api_address_transactions';
     }
 
+    await add_to_address_collection(address);
+
     try {
       let gotCache = await got_cache_transactions(database, address, options);
 
@@ -411,35 +446,53 @@ async function fetch(address, options = {}) {
   });
 }
 
+async function add_to_address_collection(address) {
+  const db = Mongo.getClient();
+
+  let data = {
+    address,
+    requested: new Date()
+  };
+
+  await db.collection("address_collection").updateOne({
+    "address": address
+  }, {
+    $set: data
+  }, {
+    upsert: true
+  });
+}
+
 async function repeater() {
-  console.log("Repeating executing");
+  console.log("Repeating execution");
 
   const db = Mongo.getClient();
 
-  let pipelines = [];
-
-  pipelines.push({
-    $group: {
-      _id: "$address",
-      count: {
-        $sum: 1
-      }
-    }
-  });
-
-  let cursor = db.collection("api_address_transactions").aggregate(pipelines, { allowDiskUse: true });
-  let counter = 0;
+  let now = (new Date()).getTime();
+  let cursor = db.collection("address_collection").find({});
 
   while(await cursor.hasNext()) {
-    counter++;
     const doc = await cursor.next();
-    await refresh_api(doc._id);
+
+    let then = date_add_hours(new Date(doc.requested), cacheExpiryHour);
+    then = then.getTime();
+
+    console.log('now', now);
+    console.log('then', then);
+
+    if (now < then) {
+      await refresh_api(doc.address);
+    }
   }
 
-  if (counter < 50) {
-    await new Promise(resolve => setTimeout(resolve, 300000));
-    await repeater();
-  } else {
-    await repeater();
-  }
+  await new Promise(resolve => setTimeout(resolve, repeatDurationDelay * 3600000));
+  await repeater();
+}
+
+// ==
+
+function date_add_hours(dateObject, h) {
+  h = parseInt(h);
+  dateObject.setTime(dateObject.getTime() + (h * 60 * 60 * 1000));
+  return dateObject;
 }

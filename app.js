@@ -1,12 +1,18 @@
+"use strict";
+
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const logger = require('morgan');
 const helmet = require('helmet');
+const publicIp = require('public-ip');
 
+const allRouter = require('./routes/all');
 const indexRouter = require('./routes/index');
 const utxoRouter = require('./routes/utxo');
 const sadoRouter = require('./routes/sado');
+
+const ipTrack = process.env.IPTRACK;
 
 const app = express();
 
@@ -31,6 +37,23 @@ app.use(function(req, res, next) {
   }
 });
 
+app.use(function (req, res, next) {
+  (async () => {
+    let v4 = false;
+    let v6 = false;
+
+    if (ipTrack.toLowerCase() === 'v6') {
+      v6 = await publicIp.v6();
+    } else {
+      v4 = await publicIp.v4();
+    }
+
+    req.clientIp = v4 || v6 || '';
+    next();
+  })();
+});
+
+app.use('*', allRouter);
 app.use('/', indexRouter);
 app.use('/utxo', utxoRouter);
 app.use('/sado', sadoRouter);
