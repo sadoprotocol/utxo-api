@@ -49,6 +49,7 @@ exports.unspents = unspents;
 exports.relay = relay;
 exports.inscriptions = inscriptions;
 exports.mempool_info = mempool_info;
+exports.ord_indexing = ord_indexing;
 
 
 async function balance(address) {
@@ -158,3 +159,12 @@ async function mempool_info() {
   }
 }
 
+async function ord_indexing() {
+  let res = await rpc([ 'indexing' ]);
+
+  if (res.includes("true") || res === true) {
+    return true;
+  }
+
+  return false;
+}

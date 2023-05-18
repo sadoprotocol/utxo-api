@@ -70,6 +70,16 @@ router.all('/unconfirmed_transactions', function(req, res, next) {
   }).catch(next);
 });
 
+router.all('/ord_indexing', function(req, res, next) {
+  utxo.ord_indexing().then(result => {
+    res.json({
+      success: true,
+      message: 'Is ord indexing?',
+      rdata: result
+    });
+  }).catch(next);
+});
+
 
 // hex base ==
 
