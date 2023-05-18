@@ -519,6 +519,7 @@ async function repeater() {
     }
   }
 
+  console.log("Repeating execution completed.");
   await new Promise(resolve => setTimeout(resolve, repeatDurationDelay * 60000));
   await repeater();
 }
