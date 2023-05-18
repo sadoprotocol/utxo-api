@@ -165,6 +165,10 @@ async function unspents(address, options = false) {
         inscriptions: []
       }
 
+      if (!data.blockN) {
+        continue;
+      }
+
       let tx = await utxo.transaction(u.hash, options);
 
       if (tx) {
