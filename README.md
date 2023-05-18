@@ -28,5 +28,6 @@ $ npm start
 ## Supported Explorer
 
 - [UTXO Parser](https://github.com/sadoprotocol/utxo-parser)
-- [BlockCypher](https://www.blockcypher.com)
+- [SoChain](https://chain.so)
+- [BlockCypher - To Be Deprecated](https://www.blockcypher.com)
 
