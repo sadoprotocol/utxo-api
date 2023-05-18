@@ -171,6 +171,7 @@ async function refresh_api(address) {
       }
     } else {
       console.log('no more results.');
+      break;
     }
   }
 

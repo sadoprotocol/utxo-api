@@ -118,8 +118,13 @@ async function transactions(address, options = {}) {
 
     if (txs.data.transactions && txs.data.transactions.length) {
       for (let i = 0; i < txs.data.transactions.length; i++) {
-        let tx = await utxo.transaction(txs.data.transactions[i].hash, options);
-        result.push(tx);
+        if (txs.data.transactions[i].hash) {
+          let tx = await utxo.transaction(txs.data.transactions[i].hash, options);
+
+          if (tx) {
+            result.push(tx);
+          }
+        }
       }
 
       options.before++;
