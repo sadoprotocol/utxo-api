@@ -131,9 +131,20 @@ async function refresh_api(address) {
       for (let i = 0; i < result.txs.length; i++) {
         let tx = result.txs[i];
 
+        console.log(address + ': ' + tx.hash);
+
         tx.address = address;
 
-        let hasUnconfirmed = false;
+        let exist = await db.collection("api_address_transactions").findOne({
+          "address": address,
+          "txid": tx.txid
+        });
+
+        if (exist && options.unconfirmed.length === 0) {
+          foundExist = true;
+          console.log('found exists.');
+          break;
+        }
 
         if (options.unconfirmed.length) {
           let foundUnconfirmedIndex = options.unconfirmed.findIndex(item => {
@@ -141,19 +152,8 @@ async function refresh_api(address) {
           });
 
           if (foundUnconfirmedIndex !== 1) {
-            hasUnconfirmed = true;
+            options.unconfirmed.splice(foundUnconfirmedIndex, 1);
           }
-        }
-
-        let exist = await db.collection("api_address_transactions").findOne({
-          "address": address,
-          "txid": tx.txid
-        });
-
-        if (exist && !hasUnconfirmed) {
-          foundExist = true;
-          console.log('found exists.');
-          break;
         }
 
         await db.collection("api_address_transactions").updateOne({
