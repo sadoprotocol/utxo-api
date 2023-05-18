@@ -42,10 +42,13 @@ function rpc(arg = []) {
 
 exports.balance = balance;
 exports.transaction = transaction;
+exports.unconfirmed_transaction = unconfirmed_transaction;
 exports.transactions = transactions;
+exports.unconfirmed_transactions = unconfirmed_transactions;
 exports.unspents = unspents;
 exports.relay = relay;
 exports.inscriptions = inscriptions;
+exports.mempool_info = mempool_info;
 
 
 async function balance(address) {
@@ -75,6 +78,16 @@ async function transaction(txid, options = false) {
   }
 }
 
+async function unconfirmed_transaction(wtxid) {
+  let res = await rpc([ 'unconfirmed_transaction', wtxid ]);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
+}
+
 async function transactions(address, options = false) {
   let res = false;
 
@@ -84,6 +97,18 @@ async function transactions(address, options = false) {
   } else {
     res = await rpc([ 'transactions', address ]);
   }
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
+}
+
+async function unconfirmed_transactions(options = {}) {
+  options = JSON.stringify(options);
+
+  let res = await rpc([ 'unconfirmed_transactions', true, options ]);
 
   try {
     return JSON.parse(res);
@@ -115,6 +140,16 @@ async function relay(hex) {
 
 async function inscriptions(outpoint) {
   let res = await rpc([ 'inscriptions', outpoint ]);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
+}
+
+async function mempool_info() {
+  let res = await rpc([ 'mempool_info', true ]);
 
   try {
     return JSON.parse(res);

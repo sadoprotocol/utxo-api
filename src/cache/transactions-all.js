@@ -108,6 +108,21 @@ async function refresh_api(address) {
   let foundExist = false;
   let result = false;
 
+  options.unconfirmed = [];
+
+  let unconfirmedCursor = await db.collection("api_address_transactions").find({
+    "address": address,
+    "blockheight": null
+  });
+
+  while(await unconfirmedCursor.hasNext()) {
+    const doc = await unconfirmedCursor.next();
+
+    options.unconfirmed.push({
+      hash: doc.hash
+    });
+  }
+
   while(options.before !== false) {
     result = await lookup.transactions(address, options);
     options = result.options;
@@ -118,23 +133,44 @@ async function refresh_api(address) {
 
         tx.address = address;
 
+        let hasUnconfirmed = false;
+
+        if (options.unconfirmed.length) {
+          let foundUnconfirmedIndex = options.unconfirmed.findIndex(item => {
+            return item.hash === tx.hash;
+          });
+
+          if (foundUnconfirmedIndex !== 1) {
+            hasUnconfirmed = true;
+          }
+        }
+
         let exist = await db.collection("api_address_transactions").findOne({
           "address": address,
           "txid": tx.txid
         });
 
-        if (exist) {
+        if (exist && !hasUnconfirmed) {
           foundExist = true;
           console.log('found exists.');
           break;
         }
 
-        await db.collection("api_address_transactions").insertOne(tx);
+        await db.collection("api_address_transactions").updateOne({
+          "address": address,
+          "txid": tx.txid
+        }, {
+          $set: tx
+        }, {
+          upsert: true
+        });
       }
 
       if (foundExist) {
         break;
       }
+    } else {
+      console.log('no more results.');
     }
   }
 

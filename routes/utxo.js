@@ -50,6 +50,26 @@ router.all('/inscriptions/:outpoint', function(req, res, next) {
   }).catch(next);
 });
 
+router.all('/mempool_info', function(req, res, next) {
+  utxo.mempool_info().then(data => {
+    res.json({
+      success: true,
+      message: 'Information of the current mempool activity',
+      rdata: data
+    });
+  }).catch(next);
+});
+
+router.all('/unconfirmed_transactions', function(req, res, next) {
+  utxo.unconfirmed_transactions(req.body.options).then(transaction => {
+    res.json({
+      success: true,
+      message: 'Unconfirmed Transactions',
+      rdata: transaction
+    });
+  }).catch(next);
+});
+
 
 // hex base ==
 
@@ -95,6 +115,16 @@ router.all('/transaction', function(req, res, next) {
     res.json({
       success: true,
       message: 'Transaction of ' + req.body.txid,
+      rdata: transaction
+    });
+  }).catch(next);
+});
+
+router.all('/unconfirmed_transaction', function(req, res, next) {
+  utxo.unconfirmed_transaction(req.body.txid).then(transaction => {
+    res.json({
+      success: true,
+      message: 'Unconfirmed transaction of ' + req.body.txid,
       rdata: transaction
     });
   }).catch(next);

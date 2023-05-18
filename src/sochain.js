@@ -110,6 +110,10 @@ async function transactions(address, options = {}) {
 
     let txs = await get(url);
 
+    if (options.before === 1 && options.unconfirmed.length) {
+      txs.data.transactions = [...options.unconfirmed, ...txs.data.transactions];
+    }
+
     let result = [];
 
     if (txs.data.transactions && txs.data.transactions.length) {
