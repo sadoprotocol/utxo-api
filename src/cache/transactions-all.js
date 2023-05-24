@@ -187,14 +187,16 @@ async function refresh_api(address) {
 
       let tx = await lookup.transaction(doc.txid);
 
-      await db.collection("api_address_transactions").updateOne({
-        "address": address,
-        "txid": tx.txid
-      }, {
-        $set: tx
-      }, {
-        upsert: true
-      });
+      if (tx) {
+        await db.collection("api_address_transactions").updateOne({
+          "address": address,
+          "txid": tx.txid
+        }, {
+          $set: tx
+        }, {
+          upsert: true
+        });
+      }
     }
   }
 }
