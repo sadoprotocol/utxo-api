@@ -136,7 +136,19 @@ async function unspents(address, options = false) {
 }
 
 async function relay(hex) {
-  return await rpc([ 'relay', hex ]);
+  let res = await rpc([ 'relay', hex ]);
+
+  try {
+    res = JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
+
+  if (res.includes('error')) {
+    throw new Error(res);
+  }
+
+  return res;
 }
 
 async function inscriptions(outpoint) {
