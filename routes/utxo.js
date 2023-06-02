@@ -184,11 +184,25 @@ router.all('/transactions', function(req, res, next) {
 
 router.all('/unspents', function(req, res, next) {
   lookup.unspents(req.body.address, req.body.options).then(unspents => {
-    utxo.ord_indexing().then(isIndexing => {
+    utxo.ord_indexer_status().then(ordStatuses => {
+      let safeHeight = 0;
+
+      if (typeof ordStatuses === 'object') {
+        if (!isNaN(ordStatuses.first)) {
+          safeHeight = ordStatuses.first;
+        }
+
+        if (!isNaN(ordStatuses.second)) {
+          if (!isNaN(ordStatuses.first) && ordStatuses.first < ordStatuses.second) {
+            safeHeight = ordStatuses.second;
+          }
+        }
+      }
+
       if (Array.isArray(unspents) && unspents.length) {
         for (let i = 0; i < unspents.length; i++) {
-          let safeToSpend = !isIndexing;
           let tx = unspents[i];
+          let safeToSpend = tx.blockN < safeHeight;
 
           // check for inscriptions
           if (safeToSpend) {
