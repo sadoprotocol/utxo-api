@@ -505,6 +505,11 @@ async function add_to_address_collection(address) {
 async function repeater() {
   console.log("Repeating execution");
 
+  if (lookupMode === 'utxo') {
+    console.log("Not required to run repeater for utxo since utxo-parser is handling this process.");
+    return false;
+  }
+
   const db = Mongo.getClient();
 
   let now = (new Date()).getTime();
