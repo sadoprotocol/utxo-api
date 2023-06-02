@@ -174,11 +174,51 @@ router.all('/transactions', function(req, res, next) {
 
 router.all('/unspents', function(req, res, next) {
   lookup.unspents(req.body.address, req.body.options).then(unspents => {
-    res.json({
-      success: true,
-      message: 'Unspents of ' + req.body.address,
-      rdata: unspents
-    });
+    utxo.ord_indexing().then(isIndexing => {
+      let safeToSpend = !isIndexing;
+
+      if (Array.isArray(unspents) && unspents.length) {
+        for (let i = 0; i < unspents.length; i++) {
+          let tx = unspents[i];
+
+          // check for inscriptions
+          if (safeToSpend) {
+            if (tx.inscriptions && Array.isArray(tx.inscriptions) && tx.inscriptions.length) {
+              safeToSpend = false;
+            }
+          }
+
+          // check for rarity
+          if (safeToSpend) {
+            if (tx.ordinals && Array.isArray(tx.ordinals) && tx.ordinals.length) {
+              for (let o = 0; o < tx.ordinals.length; o++) {
+                let ordinal = tx.ordinals[o];
+
+                if (["common", "uncommon"].includes(ordinal.rarity)) {
+                  // OK
+                } else {
+                  safeToSpend = false;
+                }
+              }
+            }
+          }
+
+          unspents[i].safeToSpend = safeToSpend;
+        }
+
+        if (req.body.options && !req.body.options.notsafetospend) {
+          unspents = unspents.filter(item => {
+            return item.safeToSpend;
+          });
+        }
+      }
+
+      res.json({
+        success: true,
+        message: 'Unspents of ' + req.body.address,
+        rdata: unspents
+      });
+    }).catch(next);
   }).catch(next);
 });
 
