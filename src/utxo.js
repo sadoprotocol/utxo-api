@@ -50,6 +50,7 @@ exports.relay = relay;
 exports.inscriptions = inscriptions;
 exports.mempool_info = mempool_info;
 exports.ord_indexing = ord_indexing;
+exports.ord_indexer_status = ord_indexer_status;
 
 
 async function balance(address) {
@@ -179,4 +180,16 @@ async function ord_indexing() {
   }
 
   return false;
+}
+
+async function ord_indexer_status() {
+  let res = await rpc([ 'indexer_status' ]);
+
+  try {
+    res = JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
+
+  return res;
 }

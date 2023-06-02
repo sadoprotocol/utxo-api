@@ -80,6 +80,16 @@ router.all('/ord_indexing', function(req, res, next) {
   }).catch(next);
 });
 
+router.all('/ord_indexer_status', function(req, res, next) {
+  utxo.ord_indexer_status().then(result => {
+    res.json({
+      success: true,
+      message: 'Status of each ord indexer',
+      rdata: result
+    });
+  }).catch(next);
+});
+
 
 // hex base ==
 
