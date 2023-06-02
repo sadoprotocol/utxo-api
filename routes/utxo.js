@@ -175,10 +175,9 @@ router.all('/transactions', function(req, res, next) {
 router.all('/unspents', function(req, res, next) {
   lookup.unspents(req.body.address, req.body.options).then(unspents => {
     utxo.ord_indexing().then(isIndexing => {
-      let safeToSpend = !isIndexing;
-
       if (Array.isArray(unspents) && unspents.length) {
         for (let i = 0; i < unspents.length; i++) {
+          let safeToSpend = !isIndexing;
           let tx = unspents[i];
 
           // check for inscriptions
@@ -198,6 +197,7 @@ router.all('/unspents', function(req, res, next) {
                   // OK
                 } else {
                   safeToSpend = false;
+                  break;
                 }
               }
             }
