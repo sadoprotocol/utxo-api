@@ -224,6 +224,8 @@ router.all('/unspents', function(req, res, next) {
                   break;
                 }
               }
+            } else {
+              safeToSpend = false;
             }
           }
 
