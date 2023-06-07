@@ -186,6 +186,15 @@ router.all('/unspents', function(req, res, next) {
   lookup.unspents(req.body.address, req.body.options).then(unspents => {
     utxo.ord_indexer_status().then(ordStatuses => {
       let safeHeight = 0;
+      let allowedRarity = ["common", "uncommon"];
+
+      if (
+        req.body.options 
+        && req.body.options.allowedrarity 
+        && Array.isArray(req.body.options.allowedrarity)
+      ) {
+        allowedRarity = req.body.options.allowedrarity
+      }
 
       if (typeof ordStatuses === 'object') {
         if (!isNaN(ordStatuses.first)) {
@@ -217,7 +226,7 @@ router.all('/unspents', function(req, res, next) {
               for (let o = 0; o < tx.ordinals.length; o++) {
                 let ordinal = tx.ordinals[o];
 
-                if (["common", "uncommon"].includes(ordinal.rarity)) {
+                if (allowedRarity.includes(ordinal.rarity)) {
                   // OK
                 } else {
                   safeToSpend = false;
