@@ -184,7 +184,7 @@ router.all('/transactions', function(req, res, next) {
 
 router.all('/unspents', function(req, res, next) {
   lookup.unspents(req.body.address, req.body.options).then(unspents => {
-    utxo.ord_indexer_status().then(ordStatuses => {
+    utxo.ord_indexer_status().then(async (ordStatuses) => {
       let safeHeight = 0;
       let allowedRarity = ["common", "uncommon"];
 
@@ -210,6 +210,8 @@ router.all('/unspents', function(req, res, next) {
 
       if (Array.isArray(unspents) && unspents.length) {
         for (let i = 0; i < unspents.length; i++) {
+          // === safe to spend
+
           let tx = unspents[i];
           let safeToSpend = tx.blockN < safeHeight;
 
@@ -239,6 +241,23 @@ router.all('/unspents', function(req, res, next) {
           }
 
           unspents[i].safeToSpend = safeToSpend;
+
+          // === tx.hex
+
+          if (
+            req.body.options 
+            && req.body.options.txhex 
+          ) {
+            try {
+              let transaction = await lookup.transaction(unspents[i].txid);
+
+              if (transaction && transaction.hex) {
+                unspents[i].txhex = transaction.hex;
+              }
+            } catch (err) {
+              //
+            }
+          }
         }
 
         if (req.body.options && !req.body.options.notsafetospend) {
