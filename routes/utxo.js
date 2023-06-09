@@ -260,7 +260,7 @@ router.all('/unspents', function(req, res, next) {
           }
         }
 
-        if (req.body.options && !req.body.options.notsafetospend) {
+        if (req.body.options && req.body.options.notsafetospend) {
           unspents = unspents.filter(item => {
             return item.safeToSpend;
           });
