@@ -134,12 +134,11 @@ Body request:
 }
 ```
 > **noord**: Exclude ordinals information, performance hit\
-> **notsafetospend**: Exclude unsafe transaction to spend\
+> **notsafetospend**: Include unsafe transaction to spend. By default, all unsafe are not included in result.\
 > **allowedrarity**: Define rarity scope of ordinal that are safe to spend\
 > **txhex**: Include the hex of transaction
 
 A transaction is considered safe to spend when:
-- Has no ordinals
 - Has no inscriptions
 - Within `allowedrarity` scope
 
