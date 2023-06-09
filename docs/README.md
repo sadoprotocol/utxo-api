@@ -134,7 +134,7 @@ Body request:
 }
 ```
 > **noord**: Exclude ordinals information, performance hit\
-> **notsafetospend**: Include unsafe transaction to spend. By default, all unsafe are not included in result.\
+> **notsafetospend**: Exclude unsafe transaction to spend\
 > **allowedrarity**: Define rarity scope of ordinal that are safe to spend\
 > **txhex**: Include the hex of transaction
 
