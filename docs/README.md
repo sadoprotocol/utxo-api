@@ -38,7 +38,7 @@ Body request:
     }
 }
 ```
-> **noord**: Exclude ordinals information, performance hit\
+> **noord**: Exclude ordinals information\
 > **nohex**: Exclude transaction hex, lower response payload\
 > **nowitness**: Exclude vin witness script, lower response payload
 
@@ -78,7 +78,7 @@ Body request:
     }
 }
 ```
-> **noord**: Exclude ordinals information, performance hit\
+> **noord**: Exclude ordinals information\
 > **nohex**: Exclude transaction hex, lower response payload\
 > **nowitness**: Exclude vin witness script, lower response payload\
 > **before**: Filters response to only include transactions below before height in the blockchain\
@@ -133,7 +133,7 @@ Body request:
     }
 }
 ```
-> **noord**: Exclude ordinals information, performance hit\
+> **noord**: Exclude ordinals information\
 > **notsafetospend**: Exclude unsafe transaction to spend\
 > **allowedrarity**: Define rarity scope of ordinal that are safe to spend\
 > **txhex**: Include the hex of transaction
