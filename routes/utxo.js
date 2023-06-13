@@ -185,6 +185,7 @@ router.all('/transactions', function(req, res, next) {
 router.all('/unspents', function(req, res, next) {
   lookup.unspents(req.body.address, req.body.options).then(unspents => {
     utxo.ord_indexer_status().then(async (ordStatuses) => {
+      let blockCount = await utxo.block_count();
       let safeHeight = 0;
       let allowedRarity = ["common", "uncommon"];
 
@@ -213,7 +214,15 @@ router.all('/unspents', function(req, res, next) {
           // === safe to spend
 
           let tx = unspents[i];
-          let safeToSpend = tx.blockN < safeHeight;
+          let safeToSpend = true;
+          let confirmation = null;
+
+          if (tx.blockN) {
+            safeToSpend = tx.blockN < safeHeight;
+            confirmation = parseInt(blockCount) - tx.blockN;
+          } else {
+            safeToSpend = false;
+          }
 
           // check for inscriptions
           if (safeToSpend) {
@@ -241,6 +250,7 @@ router.all('/unspents', function(req, res, next) {
           }
 
           unspents[i].safeToSpend = safeToSpend;
+          unspents[i].confirmation = confirmation;
 
           // === tx.hex
 

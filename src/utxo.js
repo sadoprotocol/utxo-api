@@ -51,6 +51,7 @@ exports.inscriptions = inscriptions;
 exports.mempool_info = mempool_info;
 exports.ord_indexing = ord_indexing;
 exports.ord_indexer_status = ord_indexer_status;
+exports.block_count = block_count;
 
 
 async function balance(address) {
@@ -192,4 +193,14 @@ async function ord_indexer_status() {
   }
 
   return res;
+}
+
+async function block_count() {
+  let res = await rpc([ 'block_count', true ]);
+
+  try {
+    return JSON.parse(res);
+  } catch (err) {
+    throw new Error(res);
+  }
 }
