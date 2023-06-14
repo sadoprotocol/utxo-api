@@ -176,7 +176,13 @@ router.all('/transactions', function(req, res, next) {
     res.json({
       success: true,
       message: 'Transactions of ' + req.body.address,
-      rdata: result.txs,
+      rdata: result.txs.filter(t => {
+        if (!t.blockheight) {
+          return false;
+        }
+
+        return true;
+      }),
       options: result.options
     });
   }).catch(next);
@@ -219,7 +225,7 @@ router.all('/unspents', function(req, res, next) {
 
           if (tx.blockN) {
             safeToSpend = tx.blockN < safeHeight;
-            confirmation = parseInt(blockCount) - tx.blockN;
+            confirmation = parseInt(blockCount) + 1 - tx.blockN;
           } else {
             safeToSpend = false;
           }

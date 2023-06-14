@@ -161,6 +161,10 @@ async function unspents(address, options = false) {
     for (let i = 0; i < bUnspents.data.outputs.length; i++) {
       let u = bUnspents.data.outputs[i];
 
+      if (!u.block) {
+        continue;
+      }
+
       let data = {
         n: parseInt(u.index),
         txHash: "",
@@ -172,10 +176,6 @@ async function unspents(address, options = false) {
         value: 0,
         ordinals: [],
         inscriptions: []
-      }
-
-      if (!data.blockN) {
-        continue;
       }
 
       let tx = await utxo.transaction(u.hash, options);
