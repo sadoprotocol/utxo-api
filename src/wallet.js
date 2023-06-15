@@ -50,6 +50,17 @@ async function addressBalances(addresses) {
   let spendables = [];
   let unspendables = [];
 
+  let promises = [];
+
+  for (let i = 0; i < wallet.counts.addresses; i++) {
+    promises.push(lookup.unspents(wallet.counts.addresses[i], {
+      txhex: true,
+      notsafetospend: false,
+      allowedrarity: ['common']
+    }));
+  }
+
+  let resolved = await Promise.all(promises);
 
   for (let i = 0; i < wallet.counts.addresses; i++) {
     let address = wallet.addresses[i].address;
@@ -59,11 +70,7 @@ async function addressBalances(addresses) {
     let wallet_spendables = 0;
     let wallet_unspendables = 0;
 
-    wallet.addresses[i].unspents = await lookup.unspents(address, {
-      txhex: true,
-      notsafetospend: false,
-      allowedrarity: ['common']
-    });
+    wallet.addresses[i].unspents = resolved[i];
 
     let unspents_length = wallet.addresses[i].unspents.length;
 
