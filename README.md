@@ -27,7 +27,7 @@ $ npm start
 
 ## Available API endpoints
 
-Find it in our [docs](https://github.com/sadoprotocol/utxo-api/tree/2a06b053759d9666c471d92708c35ab152180cf0/docs).
+Find it in our [docs](https://github.com/sadoprotocol/utxo-api/tree/main/docs).
 
 ## Supported Explorer
 
