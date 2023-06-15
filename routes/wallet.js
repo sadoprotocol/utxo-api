@@ -5,7 +5,7 @@ const router = express.Router();
 const wallet = require('../src/wallet');
 
 
-router.all('/fees', function(req, res, next) {
+router.all('/balances', function(req, res, next) {
   wallet.balances(req.body).then(balances => {
     res.json({
       success: true,
