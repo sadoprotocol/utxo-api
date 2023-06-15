@@ -53,7 +53,7 @@ async function addressBalances(addresses) {
   let promises = [];
 
   for (let i = 0; i < wallet.counts.addresses; i++) {
-    promises.push(lookup.unspents(wallet.counts.addresses[i], {
+    promises.push(lookup.unspents(wallet.addresses[i].address, {
       txhex: true,
       notsafetospend: false,
       allowedrarity: ['common']
