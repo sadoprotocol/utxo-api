@@ -16,6 +16,8 @@
     - [Ord Index Status](#ord-index-status)
     - [Inscriptions](#inscriptions)
     - [Inscription Media](#inscription-media)
+  - [Wallet](#wallet)
+    - [Balances](#balances)
   - [Sado](#sado)
 
 <hr>
@@ -233,6 +235,24 @@ Can be used directly with html tags for websites.
 Endpoint: `/utxo/inscriptions/<outpoint>/<id>/media` `GET`
   
 > `<outpoint>` is the `<transaction_id>:<vout_n>`
+
+
+</br>
+</br>
+
+## Wallet
+
+### Balances
+
+Retrieve ordinal aware objects with balances of addresses
+
+Endpoint: `/wallet/balances` `POST`\
+Body request:
+```js
+{
+    "addresses": ["<address_one>", "<address_two>", ...]
+}
+```
 
 
 </br>
