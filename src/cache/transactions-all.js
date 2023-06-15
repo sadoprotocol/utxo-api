@@ -4,25 +4,11 @@
 
 const Mongo = require('../../src/mongodb');
 
+const lookup = require('../../src/lookup').use();
 const utxo = require('../../src/utxo');
-const blockcypher = require('../../src/blockcypher');
-const sochain = require('../../src/sochain');
 
-const lookupMode = process.env.LOOKUPMODE;
 const repeatDurationDelay = process.env.CACHEREPEATER;
 const cacheExpiryHour = process.env.CACHEEXPIRYHOUR;
-
-var lookup;
-
-if (lookupMode === 'utxo') {
-  lookup = utxo;
-} else if (lookupMode === 'blockcypher') {
-  lookup = blockcypher;
-} else if (lookupMode === 'sochain') {
-  lookup = sochain;
-} else {
-  throw new Error("Unknown lookup mode.");
-}
 
 
 exports.prepare = prepare;
@@ -98,7 +84,7 @@ async function refresh_api(address) {
     throw new Error("Expecting address.");
   }
 
-  if (lookupMode === 'utxo') {
+  if (lookup.provider === 'utxo') {
     throw new Error("Incorrect process.");
   }
 
@@ -204,7 +190,7 @@ async function refresh_api(address) {
 async function refresh(address, options) {
   options = JSON.parse(JSON.stringify(options));
 
-  if (lookupMode === 'utxo') {
+  if (lookup.provider === 'utxo') {
     await utxo.transactions(address, options);
   } else {
     await refresh_api(address);
@@ -456,7 +442,7 @@ async function fetch(address, options = {}) {
     options = transactions_options(options);
     let database = false;
 
-    if (lookupMode === 'utxo') {
+    if (lookup.provider === 'utxo') {
       database = 'address_transactions';
     } else {
       database = 'api_address_transactions';
@@ -505,7 +491,7 @@ async function add_to_address_collection(address) {
 async function repeater() {
   console.log("Repeating execution");
 
-  if (lookupMode === 'utxo') {
+  if (lookup.provider === 'utxo') {
     console.log("Not required to run repeater for utxo since utxo-parser is handling this process.");
     return false;
   }

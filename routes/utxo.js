@@ -4,26 +4,11 @@ const express = require('express');
 const router = express.Router();
 const createError = require('http-errors');
 
+const lookup = require('../src/lookup').use();
 const utxo = require('../src/utxo');
-const blockcypher = require('../src/blockcypher');
-const sochain = require('../src/sochain');
 const inscription = require('../src/inscription');
 const cache = require('../src/cache');
 
-const lookupMode = process.env.LOOKUPMODE;
-const relayMode = process.env.RELAYMODE;
-
-var lookup;
-
-if (lookupMode === 'utxo') {
-  lookup = utxo;
-} else if (lookupMode === 'blockcypher') {
-  lookup = blockcypher;
-} else if (lookupMode === 'sochain') {
-  lookup = sochain;
-} else {
-  throw new Error("Unknown lookup mode.");
-}
 
 
 // no params
@@ -102,13 +87,7 @@ router.all(['/relay'], function(req, res, next) {
 });
 
 router.all('/relay', function(req, res, next) {
-  if (relayMode === 'blockcypher') {
-    lookup = blockcypher;
-  } else if (relayMode === 'sochain') {
-    lookup = sochain;
-  } else {
-    lookup = utxo;
-  }
+  const lookup = require('../src/lookup').use(process.env.RELAYMODE);
 
   lookup.relay(req.body.hex).then(txid => {
     res.json({
@@ -189,106 +168,14 @@ router.all('/transactions', function(req, res, next) {
 });
 
 router.all('/unspents', function(req, res, next) {
+  const lookup = require('../src/lookup');
+
   lookup.unspents(req.body.address, req.body.options).then(unspents => {
-    utxo.ord_indexer_status().then(async (ordStatuses) => {
-      let blockCount = await utxo.block_count();
-      let safeHeight = 0;
-      let allowedRarity = ["common", "uncommon"];
-
-      if (
-        req.body.options 
-        && req.body.options.allowedrarity 
-        && Array.isArray(req.body.options.allowedrarity)
-      ) {
-        allowedRarity = req.body.options.allowedrarity
-      }
-
-      if (typeof ordStatuses === 'object') {
-        if (!isNaN(ordStatuses.first)) {
-          safeHeight = ordStatuses.first;
-        }
-
-        if (!isNaN(ordStatuses.second)) {
-          if (!isNaN(ordStatuses.first) && ordStatuses.first < ordStatuses.second) {
-            safeHeight = ordStatuses.second;
-          }
-        }
-      }
-
-      if (Array.isArray(unspents) && unspents.length) {
-        for (let i = 0; i < unspents.length; i++) {
-          // === safe to spend
-
-          let tx = unspents[i];
-          let safeToSpend = true;
-          let confirmation = null;
-
-          if (tx.blockN) {
-            safeToSpend = tx.blockN < safeHeight;
-            confirmation = parseInt(blockCount) + 1 - tx.blockN;
-          } else {
-            safeToSpend = false;
-          }
-
-          // check for inscriptions
-          if (safeToSpend) {
-            if (tx.inscriptions && Array.isArray(tx.inscriptions) && tx.inscriptions.length) {
-              safeToSpend = false;
-            }
-          }
-
-          // check for rarity
-          if (safeToSpend) {
-            if (tx.ordinals && Array.isArray(tx.ordinals) && tx.ordinals.length) {
-              for (let o = 0; o < tx.ordinals.length; o++) {
-                let ordinal = tx.ordinals[o];
-
-                if (allowedRarity.includes(ordinal.rarity)) {
-                  // OK
-                } else {
-                  safeToSpend = false;
-                  break;
-                }
-              }
-            } else {
-              safeToSpend = false;
-            }
-          }
-
-          unspents[i].safeToSpend = safeToSpend;
-          unspents[i].confirmation = confirmation;
-
-          // === tx.hex
-
-          if (
-            req.body.options 
-            && req.body.options.txhex 
-          ) {
-            try {
-              let transaction = await lookup.transaction(unspents[i].txid);
-
-              if (transaction && transaction.hex) {
-                unspents[i].txhex = transaction.hex;
-              }
-            } catch (err) {
-              //
-            }
-          }
-        }
-
-        if (req.body.options && req.body.options.notsafetospend) {
-          unspents = unspents.filter(item => {
-            return item.safeToSpend;
-          });
-        }
-      }
-
-      res.json({
-        success: true,
-        message: 'Unspents of ' + req.body.address,
-        rdata: unspents
-      });
-    }).catch(next);
+    res.json({
+      success: true,
+      message: 'Unspents of ' + req.body.address,
+      rdata: unspents
+    });
   }).catch(next);
 });
 
