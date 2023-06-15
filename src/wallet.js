@@ -23,8 +23,16 @@ async function addressBalances(addresses) {
     throw new Error("Address is not an array");
   }
 
+  let build = [];
+
+  for (let i = 0; i < addresses.length; i++) {
+    build.push({
+      address: addresses[i]
+    });
+  }
+
   let wallet = {
-    addresses: addresses,
+    addresses: build,
     counts: {
       addresses: addresses.length,
       unspents: 0,
