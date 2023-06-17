@@ -1,5 +1,7 @@
 "use strict";
 
+const Mongo = require('../src/mongodb');
+
 const utxo = require('../src/utxo');
 const blockcypher = require('../src/blockcypher');
 const sochain = require('../src/sochain');
@@ -35,7 +37,7 @@ function use(provider = false) {
 }
 
 async function unspents(address, options = {}) {
-  let lookup = use();
+  const lookup = use();
 
   let result = await lookup.unspents(address, options);
   let ordStatuses = await utxo.ord_indexer_status();
@@ -111,15 +113,7 @@ async function unspents(address, options = {}) {
       if (
         options.txhex 
       ) {
-        try {
-          let transaction = await lookup.transaction(result[i].txid);
-
-          if (transaction && transaction.hex) {
-            result[i].txhex = transaction.hex;
-          }
-        } catch (err) {
-          //
-        }
+        result[i].txhex = await txHex(result[i].txid);
       }
     }
 
@@ -131,4 +125,34 @@ async function unspents(address, options = {}) {
   }
 
   return result;
+}
+
+async function txHex(txid) {
+  const db = Mongo.getClient();
+  const lookup = use();
+
+  let cacheTxHex = await db.collection("txid_hex").findOne({ txid });
+
+  if (cacheTxHex) {
+    return cacheTxHex.hex;
+  }
+
+  let transaction = await lookup.transaction(txid, { noord: true });
+
+  if (!transaction || !transaction.hex) {
+    return false;
+  }
+
+  await db.collection("txid_hex").updateOne({
+    txid
+  }, {
+    $set: {
+      txid,
+      "hex": transaction.hex
+    }
+  }, {
+    upsert: true
+  });
+
+  return transaction.hex;
 }
