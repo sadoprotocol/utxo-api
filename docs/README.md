@@ -138,7 +138,7 @@ Body request:
 > **noord**: Exclude ordinals information\
 > **notsafetospend**: Exclude unsafe transaction to spend\
 > **allowedrarity**: Define rarity scope of ordinal that are safe to spend\
-> **txhex**: Include the hex of transaction
+> **txhex**: Include the hex of transaction (only for "pubkey", "pubkeyhash", "multisig" types)
 
 A transaction is considered safe to spend when:
 - Has no inscriptions
