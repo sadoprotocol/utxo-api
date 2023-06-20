@@ -36,6 +36,8 @@ function use(provider = false) {
   return providers[lookupMode];
 }
 
+const txhexTypesAllowed = ["pubkey", "pubkeyhash", "multisig"];
+
 async function unspents(address, options = {}) {
   const lookup = use();
 
@@ -112,6 +114,9 @@ async function unspents(address, options = {}) {
 
       if (
         options.txhex 
+        && result[i].scriptPubKey
+        && result[i].scriptPubKey.type
+        && txhexTypesAllowed.includes(result[i].scriptPubKey.type.toLowerCase())
       ) {
         result[i].txhex = await txHex(result[i].txid);
       }
