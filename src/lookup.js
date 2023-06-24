@@ -76,7 +76,7 @@ async function unspents(address, options = {}) {
       let confirmation = null;
 
       if (tx.blockN) {
-        safeToSpend = tx.blockN < safeHeight;
+        safeToSpend = tx.blockN <= safeHeight;
         confirmation = parseInt(blockCount) + 1 - tx.blockN;
       } else {
         safeToSpend = false;
