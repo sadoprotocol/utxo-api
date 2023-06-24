@@ -4,6 +4,8 @@ PORT=3030
 DIRECTORYPATH=/home/bitcoin-regtest/nodejs-utxo
 LOOKUPMODE="blockcypher"
 RELAYMODE="utxo"
+RPCAUTH='username:password'
+RPCPORT=18443
 
 # INFURA
 INFURAGATEWAY="https://sado.infura-ipfs.io"

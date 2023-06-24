@@ -1,9 +1,13 @@
 "use strict";
 
+const { randomUUID } = require('crypto');
 const fs = require('fs');
 const { spawn } = require("child_process");
+const http = require('http');
 
 const dirPath = process.env.DIRECTORYPATH;
+const rpcauth = process.env.RPCAUTH;
+const rpcport = process.env.RPCPORT;
 
 if (!fs.existsSync(dirPath)) {
   throw new Error('DIRECTORYPATH "' + dirPath + '" provided does not exists.');
@@ -137,16 +141,85 @@ async function unspents(address, options = false) {
   }
 }
 
+function special_relay(hex) {
+  return new Promise((resolve, reject) => {
+    const dataString = '{"jsonrpc": "1.0", "id": "curltest", "method": "sendrawtransaction", "params": ["' + hex + '"]}';
+
+    const headers = {
+      'Content-Type': 'text/plain',
+      'Content-Length': Buffer.byteLength(dataString),
+    };
+
+    const options = {
+      hostname: '127.0.0.1',
+      port: rpcport,
+      method: 'POST',
+      headers: headers,
+      auth: rpcauth
+    };
+
+    let bodyRes = "";
+
+    const req = http.request(options, (res) => {
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => {
+        bodyRes = chunk;
+        console.log(`BODY: ${chunk}`);
+      });
+      res.on('end', () => {
+        resolve(bodyRes);
+      });
+    });
+
+    req.on('error', (e) => {
+      reject(e.message);
+    });
+
+    req.write(dataString);
+    req.end(); 
+  });
+}
+
 async function relay(hex) {
-  let res = await rpc([ 'relay', hex ]);
+  let res = "";
+
+  try {
+    res = await rpc([ 'relay', hex ]);
+  } catch (err) {
+    let errorMessage = err.message || err;
+
+    if (errorMessage.includes('spawn E2BIG')) {
+      try {
+        const filename = "relay-" + randomUUID();
+
+        fs.writeFileSync("/tmp/" + filename, hex);
+
+        res = await special_relay(hex);
+
+        fs.unlinkSync("/tmp/" + filename);
+
+        try {
+          res = JSON.parse(res);
+
+          if (res.result === null && res.error) {
+            res = 'error: ' + res.error.message;
+          } else {
+            res = res.result;
+          }
+        } catch (err) {}
+      } catch (err) {
+        return "Unable to process long hex request.";
+      }
+    }
+  }
 
   try {
     res = JSON.parse(res);
-  } catch (err) {
-    throw new Error(res);
-  }
 
-  if (res.includes('error')) {
+    if (res.includes('error')) {
+      throw new Error(res);
+    }
+  } catch (err) {
     throw new Error(res);
   }
 
