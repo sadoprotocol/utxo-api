@@ -202,7 +202,7 @@ async function relay(hex) {
           }
         } catch (err) {}
       } catch (err) {
-        return "Unable to process long hex request.";
+        res = "error: Unable to process long hex request";
       }
     }
   }
