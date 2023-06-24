@@ -190,13 +190,7 @@ async function relay(hex) {
 
     if (errorMessage.includes('spawn E2BIG')) {
       try {
-        const filename = "relay-" + randomUUID();
-
-        fs.writeFileSync("/tmp/" + filename, hex);
-
         res = await special_relay(hex);
-
-        fs.unlinkSync("/tmp/" + filename);
 
         try {
           res = JSON.parse(res);
