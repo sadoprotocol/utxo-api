@@ -198,7 +198,7 @@ async function relay(hex) {
           if (res.result === null && res.error) {
             res = 'error: ' + res.error.message;
           } else {
-            res = res.result;
+            return res.result;
           }
         } catch (err) {}
       } catch (err) {
