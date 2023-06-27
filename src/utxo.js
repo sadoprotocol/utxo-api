@@ -56,7 +56,7 @@ function rpc(method, args = []) {
       if (typeof args[i] === 'string') {
         parseString += '"' + args[i] + '"';
       } else {
-        parseString += args[i];
+        parseString += '' + args[i];
       }
     }
 
@@ -80,7 +80,7 @@ function rpc(method, args = []) {
     const req = http.request(options, (res) => {
       res.setEncoding('utf8');
       res.on('data', (chunk) => {
-        bodyRes = chunk;
+        bodyRes += chunk;
       });
       res.on('end', () => {
         try {
@@ -92,7 +92,7 @@ function rpc(method, args = []) {
             resolve(bodyRes.result);
           }
         } catch (err) {
-          reject("Invalid JSON in result");
+          resolve(bodyRes);
         }
       });
     });
