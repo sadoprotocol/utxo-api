@@ -55,6 +55,8 @@ function rpc(method, args = []) {
 
       if (typeof args[i] === 'string') {
         parseString += '"' + args[i] + '"';
+      } else {
+        parseString += args[i];
       }
     }
 
