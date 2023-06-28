@@ -131,7 +131,8 @@ Body request:
         "noord": false, // Default: false
         "notsafetospend": false, // Default: false
         "allowedrarity": ["common", "uncommon"], // Default: ["common", "uncommon"]
-        "txhex": false // Default: false
+        "txhex": false, // Default: false
+        "oips": false // Default: false
     }
 }
 ```
@@ -139,8 +140,10 @@ Body request:
 > **notsafetospend**: Exclude unsafe transaction to spend\
 > **allowedrarity**: Define rarity scope of ordinal that are safe to spend\
 > **txhex**: Include the hex of transaction (only for "pubkey", "pubkeyhash", "multisig" types)
+> **oips**: Display information that supports OIPs
 
 A transaction is considered safe to spend when:
+- Has been indexed by Ord
 - Has no inscriptions
 - Within `allowedrarity` scope
 
