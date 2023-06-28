@@ -5,6 +5,7 @@ const Mongo = require('../src/mongodb');
 const utxo = require('../src/utxo');
 const blockcypher = require('../src/blockcypher');
 const sochain = require('../src/sochain');
+const rpc = require('../src/rpc');
 
 const lookupMode = process.env.LOOKUPMODE;
 
@@ -120,6 +121,24 @@ async function unspents(address, options = {}) {
       ) {
         result[i].txhex = await txHex(result[i].txid);
       }
+
+      // === OIP-01: Meta
+      if (
+        options.oips 
+        && options.oips === true
+        && tx.inscriptions 
+        && Array.isArray(tx.inscriptions) 
+        && tx.inscriptions.length
+      ) {
+        const oip01meta = await getOip01meta(result[i].txid);
+
+        if (oip01meta) {
+          tx.inscriptions.map(v => {
+            v.meta = oip01meta;
+            return v;
+          });
+        }
+      }
     }
 
     if (options.notsafetospend) {
@@ -160,4 +179,60 @@ async function txHex(txid) {
   });
 
   return transaction.hex;
+}
+
+async function getOip01meta(txid) {
+  const lookup = use();
+
+  let result = null;
+  let tx = await lookup.transaction(txid, { noord: true });
+
+  if (tx && Array.isArray(tx.vin) && tx.vin.length) {
+    for (let i = 0; i < tx.vin.length; i++) {
+      if (
+        tx.vin[i].txinwitness 
+        && Array.isArray(tx.vin[i].txinwitness) 
+      ) {
+        for (let m = 0; m < tx.vin[i].txinwitness.length; m++) {
+          let oip1MetaIndex = tx.vin[i].txinwitness.findIndex(witnessItem => {
+            // 6170706c69636174696f6e2f6a736f6e3b636861727365743d7574662d38 = application/json;charset=utf-8
+            return witnessItem.includes("6170706c69636174696f6e2f6a736f6e3b636861727365743d7574662d38");
+          });
+
+          if (oip1MetaIndex !== -1) {
+            let decodedScript = await rpc.decodeScript(tx.vin[i].txinwitness[oip1MetaIndex]);
+
+            if (decodedScript && decodedScript.asm) {
+              let splits = decodedScript.asm.split(" ");
+              let splitIndex = splits.findIndex(item => {
+                return item === "6170706c69636174696f6e2f6a736f6e3b636861727365743d7574662d38";
+              });
+
+              let buildString = "";
+              let lookIndex = splitIndex + 2;
+
+              while(lookIndex !== false) {
+                let val = splits[lookIndex];
+
+                if (val === undefined || val === "0" || val.includes("OP")) {
+                  lookIndex = false;
+                } else {
+                  buildString += splits[lookIndex];
+                  lookIndex++;
+                }
+              }
+
+              if (buildString.trim() !== "") {
+                try {
+                  result = JSON.parse(Buffer.from(buildString, 'hex').toString("utf8"));
+                } catch (err) {}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return result;
 }
