@@ -22,6 +22,7 @@ if (!providers[lookupMode]) {
 exports.provider = lookupMode;
 exports.use = use;
 exports.unspents = unspents;
+exports.getOip01meta = getOip01meta;
 
 
 

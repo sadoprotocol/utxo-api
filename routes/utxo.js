@@ -9,6 +9,7 @@ const utxo = require('../src/utxo');
 const inscription = require('../src/inscription');
 const cache = require('../src/cache');
 
+const lookupFunctions = require('../src/lookup');
 
 
 // no params
@@ -26,8 +27,22 @@ router.all('/inscriptions/:outpoint/:id/media', function(req, res, next) {
 });
 
 router.all('/inscriptions/:outpoint', function(req, res, next) {
-  utxo.inscriptions(req.params.outpoint).then(data => {
-    res.json({
+  const outpoint = req.params.outpoint;
+
+  utxo.inscriptions(outpoint).then(async data => {
+    if (Array.isArray(data) && data.length) {
+      for (let i = 0; i < data.length; i++) {
+        const txid_arr = outpoint.split(":");
+        const txid = txid_arr[0];
+        const oipMeta = await lookupFunctions.getOip01meta(txid);
+
+        if (oipMeta) {
+          data[i].meta = oipMeta
+        }
+      }
+    }
+
+    return res.json({
       success: true,
       message: 'Inscriptions for outpoint ' + req.params.outpoint,
       rdata: data
