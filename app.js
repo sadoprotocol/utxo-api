@@ -37,7 +37,7 @@ app.use(function(req, res, next) {
 
 app.use('*', allRouter);
 app.use('/', indexRouter);
-app.use('/content', contentRouter)
+app.use('/content', contentRouter);
 app.use('/utxo', utxoRouter);
 app.use('/wallet', walletRouter);
 

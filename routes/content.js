@@ -18,3 +18,5 @@ router.all(':id', function(req, res, next) {
     res.end(buff);
   }).catch(next);
 });
+
+module.exports = router;
