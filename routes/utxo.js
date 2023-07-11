@@ -11,8 +11,22 @@ const cache = require('../src/cache');
 
 const lookupFunctions = require('../src/lookup');
 
-
 // no params
+
+router.all('/content/:id', function(req, res, next) {
+  inscription.media.get(
+    inscription.utils.getOutpointFromId(req.params.id), 
+    req.params.id
+  ).then(data => {
+    let buff = Buffer.from(data.media_content, 'base64');
+
+    res.writeHead(200, {
+      'Content-Type': data.media_type,
+      'Content-Length': buff.length
+    });
+    res.end(buff);
+  }).catch(next);
+});
 
 router.all('/inscriptions/:outpoint/:id/media', function(req, res, next) {
   inscription.media.get(req.params.outpoint, req.params.id).then(data => {
