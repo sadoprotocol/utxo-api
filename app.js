@@ -8,6 +8,7 @@ const helmet = require('helmet');
 
 const allRouter = require('./routes/all');
 const indexRouter = require('./routes/index');
+const contentRouter = require('./routes/content');
 const utxoRouter = require('./routes/utxo');
 const walletRouter = require('./routes/wallet');
 
@@ -36,6 +37,7 @@ app.use(function(req, res, next) {
 
 app.use('*', allRouter);
 app.use('/', indexRouter);
+app.use('/content', contentRouter)
 app.use('/utxo', utxoRouter);
 app.use('/wallet', walletRouter);
 
