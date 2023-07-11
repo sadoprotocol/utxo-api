@@ -18,6 +18,7 @@ router.all('/inscriptions/:outpoint/:id/media', function(req, res, next) {
     let buff = Buffer.from(data.media_content, 'base64');
 
     res.writeHead(200, {
+      'X-Frame-Options': 'ALLOWALL',
       'Content-Type': data.media_type,
       'Content-Length': buff.length
     });
