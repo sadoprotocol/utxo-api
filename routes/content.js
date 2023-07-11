@@ -5,7 +5,7 @@ const router = express.Router();
 
 const inscription = require('../src/inscription');
 
-router.all(':id', function(req, res, next) {
+router.all('/:id', function(req, res, next) {
   inscription.media.get(
     inscription.utils.getOutpointFromId(req.params.id), 
     req.params.id
