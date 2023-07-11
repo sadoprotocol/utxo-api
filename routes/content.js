@@ -11,10 +11,13 @@ router.all('/:id', function(req, res, next) {
     req.params.id
   ).then(data => {
     let buff = Buffer.from(data.media_content, 'base64');
+
     res.writeHead(200, {
+      'Content-Security-Policy': "default-src 'self'",
       'Content-Type': data.media_type,
       'Content-Length': buff.length
     });
+
     res.end(buff);
   }).catch(next);
 });
